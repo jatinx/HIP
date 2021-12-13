@@ -139,4 +139,7 @@ if(UNIX)
     add_subdirectory(TypeQualifiers)
 endif()
 
+# Add cts
+add_subdirectory(cts)
+
 cmake_policy(POP)
