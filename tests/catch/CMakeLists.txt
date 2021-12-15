@@ -139,7 +139,16 @@ if(UNIX)
     add_subdirectory(TypeQualifiers)
 endif()
 
-# Add cts
-add_subdirectory(cts)
+# Adding HIP CTS
+# HIP_CTS_ENABLE enables CTS tests - this can be used with CI
+if(HIP_CTS_ENABLE EQUAL "1")
+    add_subdirectory(cts)
+endif()
+
+# HIP_CTS_XL_ENABLE enables CTS tests which will take long time to complete
+#                   This should be enabled in staging or weekly reports
+if(HIP_CTS_XL_ENABLE EQUAL "1")
+    add_subdirectory(cts_xl)
+endif()
 
 cmake_policy(POP)
