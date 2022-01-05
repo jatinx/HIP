@@ -78,6 +78,8 @@ include_directories(
 
 if(HIP_PLATFORM MATCHES "amd" AND HIP_COMPILER MATCHES "clang")
     add_compile_options(-Wall -Wextra -pedantic -Werror)
+else()
+    add_compile_options(-allow-unsupported-compiler)
 endif()
 
 cmake_policy(PUSH)

@@ -50,28 +50,16 @@ THE SOFTWARE.
 #define HIP_ASSERT(x)                                                                              \
   { REQUIRE((x)); }
 
+// Make HIPCHECK and HIPASSERT same as HIP_CHECK and HIP_ASSERT
+#define HIPCHECK(error) HIP_CHECK(error)
+
+#define HIPASSERT(condition) HIP_ASSERT(condition)
+
 #ifdef __cplusplus
   #include <iostream>
   #include <iomanip>
   #include <chrono>
 #endif
-
-#define HIPCHECK(error)                                                                            \
-    {                                                                                              \
-        hipError_t localError = error;                                                             \
-        if ((localError != hipSuccess) && (localError != hipErrorPeerAccessAlreadyEnabled)) {      \
-            printf("error: '%s'(%d) from %s at %s:%d\n", hipGetErrorString(localError),            \
-                   localError, #error, __FILE__, __LINE__);                                        \
-            abort();                                                                               \
-        }                                                                                          \
-    }
-
-#define HIPASSERT(condition)                                                                       \
-    if (!(condition)) {                                                                            \
-        printf("assertion %s at %s:%d \n", #condition, __FILE__, __LINE__);                        \
-        abort();                                                                                   \
-    }
-
 
 
 // Utility Functions
