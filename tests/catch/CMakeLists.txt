@@ -124,8 +124,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_custom_target(build_tests)
 add_custom_target(build_report)
 
-target_compile_definitions(build_report PUBLIC HIP_TEST_REPORT_MODE)
-
 # Tests folder
 # TODO - uncomment these folders when this is finalized
 #add_subdirectory(unit)
