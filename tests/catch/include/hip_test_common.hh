@@ -27,6 +27,30 @@ THE SOFTWARE.
 
 #define HIP_PRINT_STATUS(status) INFO(hipGetErrorName(status) << " at line: " << __LINE__);
 
+#if defined(HIP_TEST_REPORT_MODE)
+
+#define HIP_CHECK(hipApi)                                                                          \
+  {                                                                                                \
+    auto __hip_api_res = (hipApi);                                                                 \
+    INFO("FILE::" << __FILE__);                                                                    \
+    INFO("HIPAPI::" << #hipApi);                                                                   \
+    INFO("LINENO::" << __LINE__);                                                                  \
+    INFO("HIPRES::" << hipGetErrorName(__hip_api_res));                                            \
+    REQUIRE(__hip_api_res == hipSuccess);                                                          \
+  }
+
+#define HIPRTC_CHECK(hiprtcApi)                                                                    \
+  {                                                                                                \
+    auto __hiprtc_api_res = (hiprtcApi);                                                           \
+    INFO("FILE::" << __FILE__);                                                                    \
+    INFO("HIPAPI::" << #hiprtcApi);                                                                \
+    INFO("LINENO::" << __LINE__);                                                                  \
+    INFO("HIPRES::" << hiprtcGetErrorName(__hip_api_res));                                         \
+    REQUIRE(__hiprtc_api_res == HIPRTC_SUCCESS);                                                   \
+  }
+
+#else
+
 #define HIP_CHECK(error)                                                                           \
   {                                                                                                \
     hipError_t localError = error;                                                                 \
@@ -46,32 +70,22 @@ THE SOFTWARE.
       REQUIRE(false);                                                                              \
     }                                                                                              \
   }
+
+#endif
+
 // Although its assert, it will be evaluated at runtime
 #define HIP_ASSERT(x)                                                                              \
   { REQUIRE((x)); }
 
 #ifdef __cplusplus
-  #include <iostream>
-  #include <iomanip>
-  #include <chrono>
+#include <iostream>
+#include <iomanip>
+#include <chrono>
 #endif
 
-#define HIPCHECK(error)                                                                            \
-    {                                                                                              \
-        hipError_t localError = error;                                                             \
-        if ((localError != hipSuccess) && (localError != hipErrorPeerAccessAlreadyEnabled)) {      \
-            printf("error: '%s'(%d) from %s at %s:%d\n", hipGetErrorString(localError),            \
-                   localError, #error, __FILE__, __LINE__);                                        \
-            abort();                                                                               \
-        }                                                                                          \
-    }
+#define HIPCHECK(error) HIP_CHECK(error)
 
-#define HIPASSERT(condition)                                                                       \
-    if (!(condition)) {                                                                            \
-        printf("assertion %s at %s:%d \n", #condition, __FILE__, __LINE__);                        \
-        abort();                                                                                   \
-    }
-
+#define HIPASSERT(condition) HIP_ASSERT(condition)
 
 
 // Utility Functions
@@ -84,8 +98,8 @@ static inline int getDeviceCount() {
 
 // Returns the current system time in microseconds
 static inline long long get_time() {
-  return std::chrono::high_resolution_clock::now().time_since_epoch()
-      /std::chrono::microseconds(1);
+  return std::chrono::high_resolution_clock::now().time_since_epoch() /
+      std::chrono::microseconds(1);
 }
 
 static inline double elapsed_time(long long startTimeUs, long long stopTimeUs) {
@@ -106,13 +120,12 @@ static inline unsigned setNumBlocks(unsigned blocksPerCU, unsigned threadsPerBlo
   return blocks;
 }
 
-static inline int RAND_R(unsigned* rand_seed)
-{
-  #if defined(_WIN32) || defined(_WIN64)
-        srand(*rand_seed);
-        return rand();
-  #else
-      return rand_r(rand_seed);
-  #endif
+static inline int RAND_R(unsigned* rand_seed) {
+#if defined(_WIN32) || defined(_WIN64)
+  srand(*rand_seed);
+  return rand();
+#else
+  return rand_r(rand_seed);
+#endif
 }
-}
+}  // namespace HipTest

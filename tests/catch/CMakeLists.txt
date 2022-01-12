@@ -122,16 +122,18 @@ endif()
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_custom_target(build_tests)
+add_custom_target(build_report)
 
 # Tests folder
+# TODO - uncomment these folders when this is finalized
 add_subdirectory(unit)
 add_subdirectory(ABM)
 add_subdirectory(hipTestMain)
-add_subdirectory(stress)
+#add_subdirectory(stress)
 
 if(UNIX)
-    add_subdirectory(multiproc)
-    add_subdirectory(TypeQualifiers)
+    #add_subdirectory(multiproc)
+    #add_subdirectory(TypeQualifiers)
 endif()
 
 cmake_policy(POP)

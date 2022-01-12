@@ -5728,6 +5728,7 @@ namespace Catch {
             stream( _config.stream() )
         {
             m_reporterPrefs.shouldRedirectStdOut = false;
+            m_reporterPrefs.shouldReportAllAssertions = true;
             if( !DerivedT::getSupportedVerbosities().count( m_config->verbosity() ) )
                 CATCH_ERROR( "Verbosity level not supported by this reporter" );
         }

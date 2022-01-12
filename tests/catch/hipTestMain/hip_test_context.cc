@@ -23,10 +23,10 @@ void TestContext::detectPlatform() {
 
 std::string TestContext::substringFound(std::vector<std::string> list, std::string filename) {
   std::string match = "";
-  for(unsigned int i = 0; i < list.size() ; i++) {
+  for (unsigned int i = 0; i < list.size(); i++) {
     if (filename.find(list.at(i)) != std::string::npos) {
-        match = list.at(i);
-        break;
+      match = list.at(i);
+      break;
     }
   }
   return match;
@@ -35,20 +35,19 @@ std::string TestContext::substringFound(std::vector<std::string> list, std::stri
 
 std::string TestContext::getMatchingConfigFile(std::string config_dir) {
   std::string configFileToUse;
-  for(auto& p: fs::recursive_directory_iterator(config_dir)) {
+  for (auto& p : fs::recursive_directory_iterator(config_dir)) {
     fs::path filename = p.path();
     std::string cur_arch = "TODO";
-    std::string arch = substringFound(amd_arch_list_,filename.filename().string());
-    std::string platform = substringFound(platform_list_,filename.filename().string());
-    std::string os = substringFound(os_list_,filename.filename().string());
+    std::string arch = substringFound(amd_arch_list_, filename.filename().string());
+    std::string platform = substringFound(platform_list_, filename.filename().string());
+    std::string os = substringFound(os_list_, filename.filename().string());
     // if arch found then use that exit from loop
-    if(arch == cur_arch) {
+    if (arch == cur_arch) {
       configFileToUse = filename.string();
       break;
-    // match the platform/os and continue to look
-    } else if((platform == config_.platform) &&
-              (os == config_.os || os == "all")) {
-      configFileToUse  = filename.string();
+      // match the platform/os and continue to look
+    } else if ((platform == config_.platform) && (os == config_.os || os == "all")) {
+      configFileToUse = filename.string();
     }
   }
   return configFileToUse;
@@ -60,10 +59,10 @@ std::string& TestContext::getJsonFile() {
   config_dir = config_dir.parent_path();
   int levels = 0;
   bool configFolderFound = false;
-  std::vector <std::string> configList;
+  std::vector<std::string> configList;
   std::string configFile;
   // check a max of 5 levels down the executable path
-  while(levels < 5) {
+  while (levels < 5) {
     fs::path temp_path = config_dir;
     temp_path /= "hipTestMain";
     temp_path /= "config";
@@ -185,7 +184,7 @@ bool TestContext::parseJsonFile() {
     return false;
   }
 
-  const picojson::object &o = v.get<picojson::object>();
+  const picojson::object& o = v.get<picojson::object>();
   for (picojson::object::const_iterator i = o.begin(); i != o.end(); ++i) {
     // Processing for DisabledTests
     if (i->first == "DisabledTests") {
@@ -196,7 +195,7 @@ bool TestContext::parseJsonFile() {
       for (auto ai = val.begin(); ai != val.end(); ai++) {
         std::string tmp = ai->get<std::string>();
         std::string newRegexName;
-        for(const auto &c : tmp) {
+        for (const auto& c : tmp) {
           if (c == '*')
             newRegexName += ".*";
           else
@@ -208,4 +207,42 @@ bool TestContext::parseJsonFile() {
   }
 
   return true;
+}
+
+FileStreamer::FileStreamer() {
+  const char* env_config = std::getenv("HT_OUTPUT_FILE");
+  LogPrintf("Env Output file: %s",
+            (env_config != nullptr)
+                ? env_config
+                : "Not found, using default output file: (amd/nvidia)_output.json");
+
+  std::string platName{};
+#if (HT_AMD == 1)
+  platName = "amd";
+#elif (HT_NVIDIA == 1)
+  platName = "nvidia";
+#endif
+
+  std::string def_output_file = platName + "config.json";
+  if (env_config != nullptr) {
+    fileName = env_config;
+  } else {
+    fileName = def_output_file;
+  }
+}
+
+const std::string& FileStreamer::getFileName() const { return fileName; }
+
+FileStreamer& FileStreamer::operator<<(std::string s) {
+  std::ofstream out(fileName, std::ios::app);
+  out << s;
+  out.close();
+  return *this;
+}
+
+FileStreamer& FileStreamer::operator<<(const char* s) {
+  std::ofstream out(fileName, std::ios::app);
+  out << s;
+  out.close();
+  return *this;
 }
