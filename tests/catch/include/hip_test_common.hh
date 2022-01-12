@@ -27,6 +27,32 @@ THE SOFTWARE.
 
 #define HIP_PRINT_STATUS(status) INFO(hipGetErrorName(status) << " at line: " << __LINE__);
 
+#if defined(HIP_TEST_REPORT_MODE)
+
+#define HIP_CHECK(hipApi)                                                                          \
+  {                                                                                                \
+    auto __hip_api_res = (hipApi);                                                                 \
+    std::cout << __FILE__ << " - " << __PRETTY_FUNCTION__ << " - " << #hipApi << " - " << __LINE__ \
+              << " - "                                                                             \
+              << std::hash<std::string>{}(std::string(__FILE__) +                                  \
+                                          std::string(__PRETTY_FUNCTION__) +                       \
+                                          std::string(#hipApi) + std::to_string(__LINE__))         \
+              << " - " << hipGetErrorName(__hip_api_res) << std::endl;                             \
+  }
+
+#define HIPRTC_CHECK(hiprtcApi)                                                                    \
+  {                                                                                                \
+    auto __hiprtc_api_res = (hiprtcApi);                                                           \
+    std::cout << __FILE__ << " - " << __PRETTY_FUNCTION__ << " - " << #hiprtcApi << " - "          \
+              << __LINE__ << " - "                                                                 \
+              << std::hash<std::string>{}(std::string(__FILE__) +                                  \
+                                          std::string(__PRETTY_FUNCTION__) +                       \
+                                          std::string(#hiprtcApi) + std::to_string(__LINE__))      \
+              << " - " << hiprtcGetErrorName(__hiprtc_api_res) << std::endl;                       \
+  }
+
+#else
+
 #define HIP_CHECK(error)                                                                           \
   {                                                                                                \
     hipError_t localError = error;                                                                 \
@@ -46,6 +72,9 @@ THE SOFTWARE.
       REQUIRE(false);                                                                              \
     }                                                                                              \
   }
+
+#endif
+
 // Although its assert, it will be evaluated at runtime
 #define HIP_ASSERT(x)                                                                              \
   { REQUIRE((x)); }
@@ -56,22 +85,9 @@ THE SOFTWARE.
   #include <chrono>
 #endif
 
-#define HIPCHECK(error)                                                                            \
-    {                                                                                              \
-        hipError_t localError = error;                                                             \
-        if ((localError != hipSuccess) && (localError != hipErrorPeerAccessAlreadyEnabled)) {      \
-            printf("error: '%s'(%d) from %s at %s:%d\n", hipGetErrorString(localError),            \
-                   localError, #error, __FILE__, __LINE__);                                        \
-            abort();                                                                               \
-        }                                                                                          \
-    }
+#define HIPCHECK(error) HIP_CHECK(error)
 
-#define HIPASSERT(condition)                                                                       \
-    if (!(condition)) {                                                                            \
-        printf("assertion %s at %s:%d \n", #condition, __FILE__, __LINE__);                        \
-        abort();                                                                                   \
-    }
-
+#define HIPASSERT(condition) HIP_ASSERT(condition)
 
 
 // Utility Functions
