@@ -229,20 +229,20 @@ FileStreamer::FileStreamer() {
   } else {
     fileName = def_output_file;
   }
-
-  out = std::ofstream(fileName, std::ios::app);
 }
 
 const std::string& FileStreamer::getFileName() const { return fileName; }
 
 FileStreamer& FileStreamer::operator<<(std::string s) {
+  std::ofstream out(fileName, std::ios::app);
   out << s;
+  out.close();
   return *this;
 }
 
 FileStreamer& FileStreamer::operator<<(const char* s) {
+  std::ofstream out(fileName, std::ios::app);
   out << s;
+  out.close();
   return *this;
 }
-
-FileStreamer::~FileStreamer() { out.close(); }

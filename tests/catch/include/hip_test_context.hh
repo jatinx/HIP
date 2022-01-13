@@ -109,11 +109,9 @@ class TestContext {
 
 class FileStreamer {
   std::string fileName{};
-  std::ofstream out;
 
  public:
   FileStreamer();
-  ~FileStreamer();
 
   const std::string& getFileName() const;
 
