@@ -44,7 +44,6 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
   }
 
   virtual void assertionStarting(Catch::AssertionInfo const& assertionInfo) override {
-    StreamingReporterBase::assertionStarting(assertionInfo);
     std::cout << "AssertionStart : Macro Name : " << assertionInfo.macroName
               << " Line No : " << assertionInfo.lineInfo
               << " Expression : " << assertionInfo.capturedExpression
@@ -52,23 +51,22 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
   }
 
   virtual bool assertionEnded(Catch::AssertionStats const& assertionStats) override {
-    StreamingReporterBase::assertionEnded(assertionStats);
     std::cout << "AssertionEnd : Result : " << assertionStats.assertionResult.succeeded()
               << std::endl;
     return true;
   }
 
-  virtual void testCaseEnded(Catch::TestCaseStats const& testCaseStats) {
+  virtual void testCaseEnded(Catch::TestCaseStats const& testCaseStats) override {
     StreamingReporterBase::testCaseEnded(testCaseStats);
     std::cout << "TestCaseEnd : " << testCaseStats.testInfo.name << std::endl;
   }
 
-  virtual void testGroupEnded(Catch::TestGroupStats const& testGroupStats) {
+  virtual void testGroupEnded(Catch::TestGroupStats const& testGroupStats) override {
     StreamingReporterBase::testGroupEnded(testGroupStats);
     std::cout << "TestGroupEnd : " << testGroupStats.groupInfo.name << std::endl;
   }
 
-  virtual void testRunEnded(Catch::TestRunStats const& testRunStats) {
+  virtual void testRunEnded(Catch::TestRunStats const& testRunStats) override {
     StreamingReporterBase::testRunEnded(testRunStats);
     std::cout << "TestRunEnd : " << testRunStats.runInfo.name << std::endl;
   }

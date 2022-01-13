@@ -218,9 +218,9 @@ FileStreamer::FileStreamer() {
 
   std::string platName{};
 #if (HT_AMD == 1)
-  fname = "amd";
+  platName = "amd";
 #elif (HT_NVIDIA == 1)
-  fname = "nvidia";
+  platName = "nvidia";
 #endif
 
   std::string def_output_file = platName + "config.json";
