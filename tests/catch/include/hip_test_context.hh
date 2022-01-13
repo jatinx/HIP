@@ -57,9 +57,9 @@ static int _log_enable = (std::getenv("HT_LOG_ENABLE") ? 1 : 0);
   }
 
 typedef struct Config_ {
-  std::string json_file;              // Json file
-  std::string platform;               // amd/nvidia
-  std::string os;                     // windows/linux
+  std::string json_file;  // Json file
+  std::string platform;   // amd/nvidia
+  std::string os;         // windows/linux
 } Config;
 
 class TestContext {
@@ -69,14 +69,13 @@ class TestContext {
   std::string current_test;
   std::set<std::string> skip_test;
   std::string json_file_;
-  std::vector<std::string>  platform_list_ = {"amd" , "nvidia"};
-  std::vector<std::string>  os_list_ = {"windows", "linux", "all"};
-  std::vector<std::string>  amd_arch_list_ = {};
+  std::vector<std::string> platform_list_ = {"amd", "nvidia"};
+  std::vector<std::string> os_list_ = {"windows", "linux", "all"};
+  std::vector<std::string> amd_arch_list_ = {};
 
   Config config_;
   std::string& getJsonFile();
-  std::string substringFound( std::vector<std::string> list,
-                              std::string filename);
+  std::string substringFound(std::vector<std::string> list, std::string filename);
   void detectOS();
   void detectPlatform();
   void fillConfig();
@@ -105,4 +104,19 @@ class TestContext {
 
   TestContext(const TestContext&) = delete;
   void operator=(const TestContext&) = delete;
+};
+
+
+class FileStreamer {
+  std::string fileName{};
+  std::ofstream out;
+
+ public:
+  FileStreamer();
+  ~FileStreamer();
+
+  const std::string& getFileName() const;
+
+  FileStreamer& operator<<(std::string s);
+  FileStreamer& operator<<(const char* s);
 };

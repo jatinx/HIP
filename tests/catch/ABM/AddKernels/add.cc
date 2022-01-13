@@ -9,12 +9,10 @@ template <typename T> __global__ void add(T* a, T* b, T* c, size_t size) {
 TEMPLATE_TEST_CASE("ABM_AddKernel_MultiTypeMultiSize", "", int, long, float, long long, double) {
   auto size = GENERATE(as<size_t>{}, 100, 500, 1000);
   TestType *d_a, *d_b, *d_c;
-  auto res = hipMalloc(&d_a, sizeof(TestType) * size);
-  REQUIRE(res == hipSuccess);
-  res = hipMalloc(&d_b, sizeof(TestType) * size);
-  REQUIRE(res == hipSuccess);
-  res = hipMalloc(&d_c, sizeof(TestType) * size);
-  REQUIRE(res == hipSuccess);
+  HIP_CHECK(hipMalloc(&d_a, sizeof(TestType) * size));
+
+  HIP_CHECK(hipMalloc(&d_b, sizeof(TestType) * size));
+  HIP_CHECK(hipMalloc(&d_c, sizeof(TestType) * size));
 
   std::vector<TestType> a, b, c;
   for (size_t i = 0; i < size; i++) {
@@ -23,18 +21,19 @@ TEMPLATE_TEST_CASE("ABM_AddKernel_MultiTypeMultiSize", "", int, long, float, lon
     c.push_back(2 * (i + 1));
   }
 
-  res = hipMemcpy(d_a, a.data(), sizeof(TestType) * size, hipMemcpyHostToDevice);
-  REQUIRE(res == hipSuccess);
-  res = hipMemcpy(d_b, b.data(), sizeof(TestType) * size, hipMemcpyHostToDevice);
-  REQUIRE(res == hipSuccess);
+  HIP_CHECK(hipMemcpy(d_a, a.data(), sizeof(TestType) * size, hipMemcpyHostToDevice));
+  HIP_CHECK(hipMemcpy(d_b, b.data(), sizeof(TestType) * size, hipMemcpyHostToDevice));
 
   hipLaunchKernelGGL(add<TestType>, 1, size, 0, 0, d_a, d_b, d_c, size);
 
-  res = hipMemcpy(a.data(), d_c, sizeof(TestType) * size, hipMemcpyDeviceToHost);
-  REQUIRE(res == hipSuccess);
+  HIP_CHECK(hipMemcpy(a.data(), d_c, sizeof(TestType) * size, hipMemcpyDeviceToHost));
 
-  hipFree(d_a);
-  hipFree(d_b);
-  hipFree(d_c);
-  REQUIRE(a == c);
+  HIP_CHECK(hipFree(d_a));
+  HIP_CHECK(hipFree(d_b));
+  HIP_CHECK(hipFree(d_c));
+
+  for (auto i = 0; i < size; i++) {
+    INFO("Iter: " << i)
+    REQUIRE(a[i] == c[i]);
+  }
 }

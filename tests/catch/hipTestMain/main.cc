@@ -3,33 +3,78 @@
 #include <hip_test_common.hh>
 #include <iostream>
 
-//#if defined(HIP_TEST_REPORT_MODE)
+namespace helper {
+std::string getQuotedString(std::string s) {
+  std::string res{"\""};
+  res += s;
+  res += "\"";
+  return res;
+}
 
-class PartialReporter : public Catch::StreamingReporterBase<PartialReporter> {
+std::string jsonStart() { return std::string("{\n"); }
+std::string jsonEnd() { return std::string("\n}"); }
+
+std::string arrayStart() { return std::string("[\n"); }
+std::string arrayEnd() { return std::string("\n]"); }
+}  // namespace helper
+
+class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
+  FileStreamer f;
+
  public:
   using StreamingReporterBase::StreamingReporterBase;
 
   static std::string getDescription() {
-    return "Reporter for testing TestCasePartialStarting/Ended events";
+    return "Reporter for logging output of HIP APIs as json file";
   }
 
-  void testCasePartialStarting(Catch::TestCaseInfo const& testInfo, uint64_t partNumber) {
-    std::cout << "TestCaseStartingPartial: " << testInfo.name << '#' << partNumber << '\n';
+  virtual void testRunStarting(Catch::TestRunInfo const& _testRunInfo) override {
+    StreamingReporterBase::testRunStarting(_testRunInfo);
+    std::cout << "TestRunStart : " << _testRunInfo.name << std::endl;
   }
 
-  void testCasePartialEnded(Catch::TestCaseStats const& testCaseStats,
-                            uint64_t partNumber) {
-    std::cout << "TestCasePartialEnded: " << testCaseStats.testInfo.name << '#' << partNumber
-              << '\n';
+  virtual void testGroupStarting(Catch::GroupInfo const& _groupInfo) override {
+    StreamingReporterBase::testGroupStarting(_groupInfo);
+    std::cout << "TestGroupStart : " << _groupInfo.name << std::endl;
   }
-  virtual void assertionStarting( Catch::AssertionInfo const& assertionInfo ) { std::cout << assertionInfo.macroName << " - " << assertionInfo.capturedExpression << std::endl; }
-        virtual bool assertionEnded( Catch::AssertionStats const& assertionStats ) { return true; }
+
+  virtual void testCaseStarting(Catch::TestCaseInfo const& _testInfo) override {
+    StreamingReporterBase::testCaseStarting(_testInfo);
+    std::cout << "TestCaseStart : " << _testInfo.name << std::endl;
+  }
+
+  virtual void assertionStarting(Catch::AssertionInfo const& assertionInfo) override {
+    StreamingReporterBase::assertionStarting(assertionInfo);
+    std::cout << "AssertionStart : Macro Name : " << assertionInfo.macroName
+              << " Line No : " << assertionInfo.lineInfo
+              << " Expression : " << assertionInfo.capturedExpression
+              << " Result Disposition: " << assertionInfo.resultDisposition << std::endl;
+  }
+
+  virtual bool assertionEnded(Catch::AssertionStats const& assertionStats) override {
+    StreamingReporterBase::assertionEnded(assertionStats);
+    std::cout << "AssertionEnd : Result : " << assertionStats.assertionResult.succeeded()
+              << std::endl;
+    return true;
+  }
+
+  virtual void testCaseEnded(Catch::TestCaseStats const& testCaseStats) {
+    StreamingReporterBase::testCaseEnded(testCaseStats);
+    std::cout << "TestCaseEnd : " << testCaseStats.testInfo.name << std::endl;
+  }
+
+  virtual void testGroupEnded(Catch::TestGroupStats const& testGroupStats) {
+    StreamingReporterBase::testGroupEnded(testGroupStats);
+    std::cout << "TestGroupEnd : " << testGroupStats.groupInfo.name << std::endl;
+  }
+
+  virtual void testRunEnded(Catch::TestRunStats const& testRunStats) {
+    StreamingReporterBase::testRunEnded(testRunStats);
+    std::cout << "TestRunEnd : " << testRunStats.runInfo.name << std::endl;
+  }
 };
 
-
-CATCH_REGISTER_REPORTER("partial", PartialReporter)
-
-//#endif
+CATCH_REGISTER_REPORTER("hip", HIPReporter)
 
 int main(int argc, char** argv) {
   auto& context = TestContext::get(argc, argv);
