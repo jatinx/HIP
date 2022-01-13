@@ -53,6 +53,10 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
   virtual bool assertionEnded(Catch::AssertionStats const& assertionStats) override {
     std::cout << "AssertionEnd : Result : " << assertionStats.assertionResult.succeeded()
               << std::endl;
+    std::cout << "Info attached to this assertions" << std::endl;
+    for (const auto& i : assertionStats.infoMessages) {
+      std::cout << "Macro Name : " << i.macroName << " Message: " << i.message << std::endl;
+    }
     return true;
   }
 

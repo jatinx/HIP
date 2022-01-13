@@ -32,23 +32,21 @@ THE SOFTWARE.
 #define HIP_CHECK(hipApi)                                                                          \
   {                                                                                                \
     auto __hip_api_res = (hipApi);                                                                 \
-    std::cout << __FILE__ << " - " << __PRETTY_FUNCTION__ << " - " << #hipApi << " - " << __LINE__ \
-              << " - "                                                                             \
-              << std::hash<std::string>{}(std::string(__FILE__) +                                  \
-                                          std::string(__PRETTY_FUNCTION__) +                       \
-                                          std::string(#hipApi) + std::to_string(__LINE__))         \
-              << " - " << hipGetErrorName(__hip_api_res) << std::endl;                             \
+    INFO("FILE::" << __FILE__);                                                                    \
+    INFO("HIPAPI::" << #hipApi);                                                                   \
+    INFO("LINENO::" << __LINE__);                                                                  \
+    INFO("HIPRES::" << hipGetErrorName(__hip_api_res));                                            \
+    REQUIRE(__hip_api_res == hipSuccess);                                                          \
   }
 
 #define HIPRTC_CHECK(hiprtcApi)                                                                    \
   {                                                                                                \
     auto __hiprtc_api_res = (hiprtcApi);                                                           \
-    std::cout << __FILE__ << " - " << __PRETTY_FUNCTION__ << " - " << #hiprtcApi << " - "          \
-              << __LINE__ << " - "                                                                 \
-              << std::hash<std::string>{}(std::string(__FILE__) +                                  \
-                                          std::string(__PRETTY_FUNCTION__) +                       \
-                                          std::string(#hiprtcApi) + std::to_string(__LINE__))      \
-              << " - " << hiprtcGetErrorName(__hiprtc_api_res) << std::endl;                       \
+    INFO("FILE::" << __FILE__);                                                                    \
+    INFO("HIPAPI::" << #hipApi);                                                                   \
+    INFO("LINENO::" << __LINE__);                                                                  \
+    INFO("HIPRES::" << hipGetErrorName(__hip_api_res));                                            \
+    REQUIRE(__hiprtc_api_res == HIPRTC_SUCCESS);                                                   \
   }
 
 #else
@@ -80,9 +78,9 @@ THE SOFTWARE.
   { REQUIRE((x)); }
 
 #ifdef __cplusplus
-  #include <iostream>
-  #include <iomanip>
-  #include <chrono>
+#include <iostream>
+#include <iomanip>
+#include <chrono>
 #endif
 
 #define HIPCHECK(error) HIP_CHECK(error)
@@ -100,8 +98,8 @@ static inline int getDeviceCount() {
 
 // Returns the current system time in microseconds
 static inline long long get_time() {
-  return std::chrono::high_resolution_clock::now().time_since_epoch()
-      /std::chrono::microseconds(1);
+  return std::chrono::high_resolution_clock::now().time_since_epoch() /
+      std::chrono::microseconds(1);
 }
 
 static inline double elapsed_time(long long startTimeUs, long long stopTimeUs) {
@@ -122,13 +120,12 @@ static inline unsigned setNumBlocks(unsigned blocksPerCU, unsigned threadsPerBlo
   return blocks;
 }
 
-static inline int RAND_R(unsigned* rand_seed)
-{
-  #if defined(_WIN32) || defined(_WIN64)
-        srand(*rand_seed);
-        return rand();
-  #else
-      return rand_r(rand_seed);
-  #endif
+static inline int RAND_R(unsigned* rand_seed) {
+#if defined(_WIN32) || defined(_WIN64)
+  srand(*rand_seed);
+  return rand();
+#else
+  return rand_r(rand_seed);
+#endif
 }
-}
+}  // namespace HipTest
