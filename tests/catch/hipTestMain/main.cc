@@ -11,11 +11,16 @@ std::string getQuotedString(std::string s) {
   return res;
 }
 
+std::string boolToString(bool res) {
+  if (res) return res ? "true" : "false";
+}
 std::string jsonStart() { return std::string("{\n"); }
 std::string jsonEnd() { return std::string("\n}"); }
 
 std::string arrayStart() { return std::string("[\n"); }
 std::string arrayEnd() { return std::string("\n]"); }
+
+std::string comma() { return std::string(",\n"); }
 }  // namespace helper
 
 class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
@@ -30,53 +35,81 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
 
   virtual void testRunStarting(Catch::TestRunInfo const& _testRunInfo) override {
     StreamingReporterBase::testRunStarting(_testRunInfo);
+    static bool isFirst = true;
+    if (!isFirst) f << helper::comma();
     f << helper::jsonStart() << helper::getQuotedString("TestRunName") << ":"
-      << helper::getQuotedString(_testRunInfo.name) << ",\n" << "";
-    std::cout << "TestRunStart : " << _testRunInfo.name << std::endl;
+      << helper::getQuotedString(_testRunInfo.name) << helper::comma()
+      << helper::getQuotedString("TestGroups") << ":" << helper::arrayStart();
+    if (isFirst) isFirst = false;
   }
 
   virtual void testGroupStarting(Catch::GroupInfo const& _groupInfo) override {
     StreamingReporterBase::testGroupStarting(_groupInfo);
+    static bool isFirst = true;
+    if (!isFirst) f << helper::comma();
     f << helper::jsonStart() << helper::getQuotedString("TestGroupName") << ":"
-      << helper::getQuotedString(_groupInfo.name) << ",\n";
-    std::cout << "TestGroupStart : " << _groupInfo.name << std::endl;
+      << helper::getQuotedString(_groupInfo.name) << ",\n"
+      << helper::getQuotedString("TestCases") << ":" << helper::arrayStart();
   }
 
   virtual void testCaseStarting(Catch::TestCaseInfo const& _testInfo) override {
     StreamingReporterBase::testCaseStarting(_testInfo);
-    std::cout << "TestCaseStart : " << _testInfo.name << std::endl;
+    static bool isFirst = true;
+    if (!isFirst) f << helper::comma();
+    f << helper::jsonStart() << helper::getQuotedString("TestCase") << ":"
+      << helper::getQuotedString(_testInfo.name) << helper::getQuotedString("Assertions") << ":"
+      << helper::arrayStart();
+    isFirst = false;
   }
 
   virtual void assertionStarting(Catch::AssertionInfo const& assertionInfo) override {
-    std::cout << "AssertionStart : Macro Name : " << assertionInfo.macroName
-              << " Line No : " << assertionInfo.lineInfo
-              << " Expression : " << assertionInfo.capturedExpression
-              << " Result Disposition: " << assertionInfo.resultDisposition << std::endl;
+    static bool isFirst = true;
+    if (!isFirst) f << helper::comma();
+    f << helper::jsonStart() << helper::getQuotedString("Name") << ":"
+      << helper::getQuotedString(std::string(assertionInfo.macroName)) << helper::comma()
+      << helper::getQuotedString("FileName") << ":"
+      << helper::getQuotedString(std::string(assertionInfo.lineInfo.file)) << helper::comma()
+      << helper::getQuotedString("Expression") << ":"
+      << helper::getQuotedString(std::string(assertionInfo.capturedExpression)) << helper::comma();
+    isFirst = false;
   }
 
   virtual bool assertionEnded(Catch::AssertionStats const& assertionStats) override {
     std::cout << "AssertionEnd : Result : " << assertionStats.assertionResult.succeeded()
               << std::endl;
     std::cout << "Info attached to this assertions" << std::endl;
+    f << helper::getQuotedString("Result") << ":"
+      << helper::getQuotedString(helper::boolToString(assertionStats.assertionResult.succeeded()));
+
+
+    bool isFirstm = true;
     for (const auto& i : assertionStats.infoMessages) {
-      std::cout << "Macro Name : " << i.macroName << " Message: " << i.message << std::endl;
+      if (!isFirstm)
+        f << helper::comma();
+      else {
+        f << helper::comma() << helper::getQuotedString("Messages") << ":" << helper::arrayStart();
+      }
+      f << helper::getQuotedString(i.message);
+      isFirstm = false;
     }
+    if (!isFirstm) f << helper::arrayEnd();
+    f << helper::jsonEnd();
     return true;
   }
 
   virtual void testCaseEnded(Catch::TestCaseStats const& testCaseStats) override {
     StreamingReporterBase::testCaseEnded(testCaseStats);
-    std::cout << "TestCaseEnd : " << testCaseStats.testInfo.name << std::endl;
+    f << helper::arrayEnd() << helper::comma() << helper::jsonEnd();
   }
 
   virtual void testGroupEnded(Catch::TestGroupStats const& testGroupStats) override {
     StreamingReporterBase::testGroupEnded(testGroupStats);
-    std::cout << "TestGroupEnd : " << testGroupStats.groupInfo.name << std::endl;
+    f << helper::arrayEnd() << helper::comma() << helper::jsonEnd();
   }
 
   virtual void testRunEnded(Catch::TestRunStats const& testRunStats) override {
     StreamingReporterBase::testRunEnded(testRunStats);
-    std::cout << "TestRunEnd : " << testRunStats.runInfo.name << std::endl;
+    f << helper::arrayEnd() << helper::comma() << helper::jsonEnd();
   }
 };
 
