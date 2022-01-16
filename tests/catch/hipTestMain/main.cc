@@ -4,6 +4,7 @@
 #include <iostream>
 
 namespace helper {
+static bool fAssertionFlag = true;
 std::string getQuotedString(std::string s) {
   std::string res{"\""};
   res += s;
@@ -61,15 +62,16 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
   }
 
   virtual void assertionStarting(Catch::AssertionInfo const& assertionInfo) override {
-    static bool isFirst = true;
-    if (!isFirst) f << helper::comma();
+    if (!helper::fAssertionFlag)
+      f << helper::comma();
+    else
+      helper::fAssertionFlag = false;
     f << helper::jsonStart() << helper::getQuotedString("Name") << ":"
       << helper::getQuotedString(std::string(assertionInfo.macroName)) << helper::comma()
       << helper::getQuotedString("FileName") << ":"
       << helper::getQuotedString(std::string(assertionInfo.lineInfo.file)) << helper::comma()
       << helper::getQuotedString("Expression") << ":"
       << helper::getQuotedString(std::string(assertionInfo.capturedExpression)) << helper::comma();
-    isFirst = false;
   }
 
   virtual bool assertionEnded(Catch::AssertionStats const& assertionStats) override {
@@ -97,6 +99,7 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
 
   virtual void testCaseEnded(Catch::TestCaseStats const& testCaseStats) override {
     StreamingReporterBase::testCaseEnded(testCaseStats);
+    helper::fAssertionFlag = true;
     f << helper::arrayEnd() << helper::jsonEnd();
   }
 
