@@ -43,7 +43,7 @@ THE SOFTWARE.
   {                                                                                                \
     auto __hiprtc_api_res = (hiprtcApi);                                                           \
     INFO("FILE::" << __FILE__);                                                                    \
-    INFO("HIPAPI::" << #hipApi);                                                                   \
+    INFO("HIPAPI::" << #hiprtcApi);                                                                \
     INFO("LINENO::" << __LINE__);                                                                  \
     INFO("HIPRES::" << hipGetErrorName(__hip_api_res));                                            \
     REQUIRE(__hiprtc_api_res == HIPRTC_SUCCESS);                                                   \
