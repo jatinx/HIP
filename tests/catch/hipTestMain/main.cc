@@ -11,9 +11,7 @@ std::string getQuotedString(std::string s) {
   return res;
 }
 
-std::string boolToString(bool res) {
-  if (res) return res ? "true" : "false";
-}
+std::string boolToString(bool res) { return res ? "true" : "false"; }
 std::string jsonStart() { return std::string("{\n"); }
 std::string jsonEnd() { return std::string("\n}"); }
 
@@ -57,8 +55,8 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
     static bool isFirst = true;
     if (!isFirst) f << helper::comma();
     f << helper::jsonStart() << helper::getQuotedString("TestCase") << ":"
-      << helper::getQuotedString(_testInfo.name) << helper::getQuotedString("Assertions") << ":"
-      << helper::arrayStart();
+      << helper::getQuotedString(_testInfo.name) << helper::comma()
+      << helper::getQuotedString("Assertions") << ":" << helper::arrayStart();
     isFirst = false;
   }
 
@@ -99,17 +97,17 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
 
   virtual void testCaseEnded(Catch::TestCaseStats const& testCaseStats) override {
     StreamingReporterBase::testCaseEnded(testCaseStats);
-    f << helper::arrayEnd() << helper::comma() << helper::jsonEnd();
+    f << helper::arrayEnd() << helper::jsonEnd();
   }
 
   virtual void testGroupEnded(Catch::TestGroupStats const& testGroupStats) override {
     StreamingReporterBase::testGroupEnded(testGroupStats);
-    f << helper::arrayEnd() << helper::comma() << helper::jsonEnd();
+    f << helper::arrayEnd() << helper::jsonEnd();
   }
 
   virtual void testRunEnded(Catch::TestRunStats const& testRunStats) override {
     StreamingReporterBase::testRunEnded(testRunStats);
-    f << helper::arrayEnd() << helper::comma() << helper::jsonEnd();
+    f << helper::arrayEnd() << helper::jsonEnd();
   }
 };
 
