@@ -30,11 +30,15 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
 
   virtual void testRunStarting(Catch::TestRunInfo const& _testRunInfo) override {
     StreamingReporterBase::testRunStarting(_testRunInfo);
+    f << helper::jsonStart() << helper::getQuotedString("TestRunName") << ":"
+      << helper::getQuotedString(_testRunInfo.name) << ",\n" << "";
     std::cout << "TestRunStart : " << _testRunInfo.name << std::endl;
   }
 
   virtual void testGroupStarting(Catch::GroupInfo const& _groupInfo) override {
     StreamingReporterBase::testGroupStarting(_groupInfo);
+    f << helper::jsonStart() << helper::getQuotedString("TestGroupName") << ":"
+      << helper::getQuotedString(_groupInfo.name) << ",\n";
     std::cout << "TestGroupStart : " << _groupInfo.name << std::endl;
   }
 
