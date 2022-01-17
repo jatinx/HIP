@@ -223,7 +223,7 @@ FileStreamer::FileStreamer() {
   platName = "nvidia";
 #endif
 
-  std::string def_output_file = platName + "config.json";
+  std::string def_output_file = platName + "_report.json";
   if (env_config != nullptr) {
     fileName = env_config;
   } else {
