@@ -31,9 +31,4 @@ TEMPLATE_TEST_CASE("ABM_AddKernel_MultiTypeMultiSize", "", int, long, float, lon
   HIP_CHECK(hipFree(d_a));
   HIP_CHECK(hipFree(d_b));
   HIP_CHECK(hipFree(d_c));
-
-  for (unsigned long i = 0; i < size; i++) {
-    INFO("Iter: " << i)
-//    REQUIRE(a[i] == c[i]);
-  }
 }

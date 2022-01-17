@@ -60,7 +60,7 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
     if (!helper::fTestCaseFlag)
       f << helper::comma();
     else
-      helper::fTestGroupFlag = false;
+      helper::fTestCaseFlag = false;
 
     f << helper::jsonStart() << helper::getQuotedString("TestCase") << ":"
       << helper::getQuotedString(_testInfo.name) << helper::comma()

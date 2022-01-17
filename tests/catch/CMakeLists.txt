@@ -126,7 +126,7 @@ add_custom_target(build_report)
 
 # Tests folder
 # TODO - uncomment these folders when this is finalized
-#add_subdirectory(unit)
+add_subdirectory(unit)
 add_subdirectory(ABM)
 add_subdirectory(hipTestMain)
 #add_subdirectory(stress)
