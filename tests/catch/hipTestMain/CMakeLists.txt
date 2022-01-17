@@ -28,3 +28,11 @@ if(HIP_PLATFORM MATCHES "amd")
 else()
     target_compile_options(Main_Object PUBLIC -std=c++17)
 endif()
+
+
+add_executable(Report EXCLUDE_FROM_ALL main.cc
+                                      hip_test_context.cc
+                                      $<TARGET_OBJECTS:ABMAddKernelsR>)
+add_dependencies(build_report Report)
+target_link_libraries(Report stdc++fs) 
+target_compile_definitions(Report PUBLIC HIP_TEST_REPORT_MODE=1)
