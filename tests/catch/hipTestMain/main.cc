@@ -4,7 +4,10 @@
 #include <iostream>
 
 namespace helper {
+static bool fTestGroupFlag = true;
+static bool fTestCaseFlag = true;
 static bool fAssertionFlag = true;
+
 std::string getQuotedString(std::string s) {
   std::string res{"\""};
   res += s;
@@ -34,18 +37,19 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
 
   virtual void testRunStarting(Catch::TestRunInfo const& _testRunInfo) override {
     StreamingReporterBase::testRunStarting(_testRunInfo);
-    static bool isFirst = true;
-    if (!isFirst) f << helper::comma();
+
     f << helper::jsonStart() << helper::getQuotedString("TestRunName") << ":"
       << helper::getQuotedString(_testRunInfo.name) << helper::comma()
       << helper::getQuotedString("TestGroups") << ":" << helper::arrayStart();
-    if (isFirst) isFirst = false;
   }
 
   virtual void testGroupStarting(Catch::GroupInfo const& _groupInfo) override {
     StreamingReporterBase::testGroupStarting(_groupInfo);
-    static bool isFirst = true;
-    if (!isFirst) f << helper::comma();
+    if (!helper::fTestGroupFlag)
+      f << helper::comma();
+    else
+      helper::fTestGroupFlag = false;
+    
     f << helper::jsonStart() << helper::getQuotedString("TestGroupName") << ":"
       << helper::getQuotedString(_groupInfo.name) << ",\n"
       << helper::getQuotedString("TestCases") << ":" << helper::arrayStart();
@@ -53,12 +57,14 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
 
   virtual void testCaseStarting(Catch::TestCaseInfo const& _testInfo) override {
     StreamingReporterBase::testCaseStarting(_testInfo);
-    static bool isFirst = true;
-    if (!isFirst) f << helper::comma();
+    if (!helper::fTestCaseFlag)
+      f << helper::comma();
+    else
+      helper::fTestGroupFlag = false;
+
     f << helper::jsonStart() << helper::getQuotedString("TestCase") << ":"
       << helper::getQuotedString(_testInfo.name) << helper::comma()
       << helper::getQuotedString("Assertions") << ":" << helper::arrayStart();
-    isFirst = false;
   }
 
   virtual void assertionStarting(Catch::AssertionInfo const& assertionInfo) override {
@@ -75,9 +81,6 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
   }
 
   virtual bool assertionEnded(Catch::AssertionStats const& assertionStats) override {
-    std::cout << "AssertionEnd : Result : " << assertionStats.assertionResult.succeeded()
-              << std::endl;
-    std::cout << "Info attached to this assertions" << std::endl;
     f << helper::getQuotedString("Result") << ":"
       << helper::getQuotedString(helper::boolToString(assertionStats.assertionResult.succeeded()));
 
@@ -105,11 +108,13 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
 
   virtual void testGroupEnded(Catch::TestGroupStats const& testGroupStats) override {
     StreamingReporterBase::testGroupEnded(testGroupStats);
+    helper::fTestCaseFlag = true;
     f << helper::arrayEnd() << helper::jsonEnd();
   }
 
   virtual void testRunEnded(Catch::TestRunStats const& testRunStats) override {
     StreamingReporterBase::testRunEnded(testRunStats);
+    helper::fTestGroupFlag = true;
     f << helper::arrayEnd() << helper::jsonEnd();
   }
 };
