@@ -113,7 +113,7 @@ class FileStreamer {
  public:
   FileStreamer();
 
-  const bool isFileEmpty() const;
+  bool isFileEmpty() const;
   const std::string& getFileName() const;
 
   FileStreamer& operator<<(std::string s);
