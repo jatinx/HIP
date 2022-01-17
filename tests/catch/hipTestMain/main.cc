@@ -38,6 +38,9 @@ class HIPReporter : public Catch::StreamingReporterBase<HIPReporter> {
   virtual void testRunStarting(Catch::TestRunInfo const& _testRunInfo) override {
     StreamingReporterBase::testRunStarting(_testRunInfo);
 
+    if (!f.isFileEmpty()) 
+      f << helper::comma();
+
     f << helper::jsonStart() << helper::getQuotedString("TestRunName") << ":"
       << helper::getQuotedString(_testRunInfo.name) << helper::comma()
       << helper::getQuotedString("TestGroups") << ":" << helper::arrayStart();

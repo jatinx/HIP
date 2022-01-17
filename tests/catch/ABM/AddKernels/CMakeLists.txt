@@ -7,6 +7,7 @@ hip_add_exe_to_target(NAME ABMAddKernels
                       TEST_SRC ${TEST_SRC}
                       TEST_TARGET_NAME build_tests)
 
+# TODO make this a function
 add_executable(ABMAddKernelsR EXCLUDE_FROM_ALL ${TEST_SRC} $<TARGET_OBJECTS:Main_Object>)
 add_dependencies(build_report ABMAddKernelsR)
 target_link_libraries(ABMAddKernelsR stdc++fs) 

@@ -233,6 +233,11 @@ FileStreamer::FileStreamer() {
 
 const std::string& FileStreamer::getFileName() const { return fileName; }
 
+const bool FileStreamer::isFileEmpty() const {
+  std::ifstream pFile(fileName);
+  return pFile.peek() == std::ifstream::traits_type::eof();
+}
+
 FileStreamer& FileStreamer::operator<<(std::string s) {
   std::ofstream out(fileName, std::ios::app);
   out << s;
