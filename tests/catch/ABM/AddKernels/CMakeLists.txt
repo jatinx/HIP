@@ -9,6 +9,7 @@ hip_add_exe_to_target(NAME ABMAddKernels
 
 # TODO make this a function
 add_library(ABMAddKernelsR EXCLUDE_FROM_ALL OBJECT ${TEST_SRC})
+target_compile_definitions(ABMAddKernelsR PUBLIC HIP_TEST_REPORT_MODE=1)
 if(HIP_PLATFORM MATCHES "amd")
     set_property(TARGET ABMAddKernelsR PROPERTY CXX_STANDARD 17)
 else()
