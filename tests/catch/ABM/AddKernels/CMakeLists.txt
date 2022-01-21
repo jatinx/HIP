@@ -1,6 +1,7 @@
 # Common Tests - Test independent of all platforms
 set(TEST_SRC
     add.cc
+    hipHostMTest.cc
 )
 
 hip_add_exe_to_target(NAME ABMAddKernels
