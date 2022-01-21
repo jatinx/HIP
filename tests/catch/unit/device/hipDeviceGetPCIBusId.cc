@@ -29,8 +29,7 @@
 
 namespace hipDeviceGetPCIBusIdTests {
 
-void getPciBusId(int deviceCount,
-                 char **hipDeviceList) {
+void getPciBusId(int deviceCount, char** hipDeviceList) {
   for (int i = 0; i < deviceCount; i++) {
     HIP_CHECK(hipDeviceGetPCIBusId(hipDeviceList[i], MAX_DEVICE_LENGTH, i));
   }
@@ -43,7 +42,7 @@ TEST_CASE("Unit_hipDeviceGetPCIBusId_Check_PciBusID_WithAttr") {
   REQUIRE_FALSE(deviceCount == 0);
   printf("No.of gpus in the system: %d\n", deviceCount);
   // Allocate an array of pointer to characters
-  char **hipDeviceList = new char*[deviceCount];
+  char** hipDeviceList = new char*[deviceCount];
   REQUIRE_FALSE(hipDeviceList == nullptr);
   for (int i = 0; i < deviceCount; i++) {
     hipDeviceList[i] = new char[MAX_DEVICE_LENGTH];
@@ -56,10 +55,8 @@ TEST_CASE("Unit_hipDeviceGetPCIBusId_Check_PciBusID_WithAttr") {
     int pciDeviceID = -1;
     int pciDomainID = -1;
     int tempPciBusId = -1;
-    sscanf(hipDeviceList[i], "%04x:%02x:%02x", &pciDomainID, &pciBusID,
-           &pciDeviceID);
-    HIP_CHECK(hipDeviceGetAttribute(&tempPciBusId,
-                                   hipDeviceAttributePciBusId, i));
+    sscanf(hipDeviceList[i], "%04x:%02x:%02x", &pciDomainID, &pciBusID, &pciDeviceID);
+    HIP_CHECK(hipDeviceGetAttribute(&tempPciBusId, hipDeviceAttributePciBusId, i));
     REQUIRE_FALSE(pciBusID != tempPciBusId);
   }
   // Deallocate
@@ -67,8 +64,9 @@ TEST_CASE("Unit_hipDeviceGetPCIBusId_Check_PciBusID_WithAttr") {
     delete hipDeviceList[i];
   }
   delete[] hipDeviceList;
-  printf("pciBusID output of both hipDeviceGetPCIBusId and"
-         " hipDeviceGetAttribute matched for all gpus\n");
+  printf(
+      "pciBusID output of both hipDeviceGetPCIBusId and"
+      " hipDeviceGetAttribute matched for all gpus\n");
 }
 
 
@@ -87,31 +85,24 @@ TEST_CASE("Unit_hipDeviceGetPCIBusId_NegTst") {
 
   // pciBusId is nullptr
   SECTION("pciBusId is nullptr") {
-    REQUIRE_FALSE(hipDeviceGetPCIBusId(nullptr, MAX_DEVICE_LENGTH, device)
-                  == hipSuccess);
+    HIP_NCHECK(hipDeviceGetPCIBusId(nullptr, MAX_DEVICE_LENGTH, device));
   }
 
   // len = 0
-  SECTION("len is 0") {
-    REQUIRE_FALSE(hipDeviceGetPCIBusId(pciBusId, 0, device) == hipSuccess);
-  }
+  SECTION("len is 0") { HIP_NCHECK(hipDeviceGetPCIBusId(pciBusId, 0, device)); }
 
   // len < 0
-  SECTION("len is less than 0") {
-    REQUIRE_FALSE(hipDeviceGetPCIBusId(pciBusId, -1, device) == hipSuccess);
-  }
+  SECTION("len is less than 0") { HIP_NCHECK(hipDeviceGetPCIBusId(pciBusId, -1, device)); }
 
   // device = -1
   SECTION("device is -1") {
-    REQUIRE_FALSE(hipDeviceGetPCIBusId(pciBusId, MAX_DEVICE_LENGTH, -1)
-                  == hipSuccess);
+    REQUIRE_FALSE(hipDeviceGetPCIBusId(pciBusId, MAX_DEVICE_LENGTH, -1) == hipSuccess);
   }
   // device = Non Existing Device
   SECTION("device is -1") {
     int deviceCount = 0;
     HIP_CHECK(hipGetDeviceCount(&deviceCount));
     REQUIRE_FALSE(deviceCount == 0);
-    REQUIRE_FALSE(hipDeviceGetPCIBusId(pciBusId, MAX_DEVICE_LENGTH,
-                  deviceCount) == hipSuccess);
+    HIP_NCHECK(hipDeviceGetPCIBusId(pciBusId, MAX_DEVICE_LENGTH, deviceCount));
   }
 }

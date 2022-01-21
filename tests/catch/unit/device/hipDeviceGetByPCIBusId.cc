@@ -56,13 +56,9 @@ TEST_CASE("Unit_hipDeviceGetByPCIBusId_Functional") {
  */
 TEST_CASE("Unit_hipDeviceGetByPCIBusId_NegativeNullChk") {
   int device = -1;
-  hipError_t ret;
   char pciBusIdstr[SIZE]{};
-  ret = hipDeviceGetByPCIBusId(nullptr, pciBusIdstr);
-  CHECK(ret != hipSuccess);
-
-  ret = hipDeviceGetByPCIBusId(&device, nullptr);
-  CHECK(ret != hipSuccess);
+  HIP_NCHECK(hipDeviceGetByPCIBusId(nullptr, pciBusIdstr));
+  HIP_NCHECK(hipDeviceGetByPCIBusId(&device, nullptr));
 }
 
 /**
@@ -72,12 +68,8 @@ TEST_CASE("Unit_hipDeviceGetByPCIBusId_NegativeNullChk") {
  */
 TEST_CASE("Unit_hipDeviceGetByPCIBusId_NegativeInputString") {
   int device = -1;
-  hipError_t ret;
-  ret = hipDeviceGetByPCIBusId(&device, "");
-  CHECK(ret != hipSuccess);
-
-  ret = hipDeviceGetByPCIBusId(&device, "0000:");
-  CHECK(ret != hipSuccess);
+  HIP_NCHECK(hipDeviceGetByPCIBusId(&device, ""));
+  HIP_NCHECK(hipDeviceGetByPCIBusId(&device, "0000:"));
 }
 
 /**
@@ -121,10 +113,8 @@ TEST_CASE("Unit_hipDeviceGetByPCIBusId_WrongBusID") {
   // now pass the non existing bus id as string
   char pciBusIdstr[MaxBusIdLen];
   int device = -1;
-  hipError_t ret;
   snprintf(pciBusIdstr, sizeof(pciBusIdstr), "%04x:%02x:%02x", pciDomainID[0],
            id, pciDeviceID[0]);
-  ret = hipDeviceGetByPCIBusId(&device, pciBusIdstr);
-  REQUIRE(ret != hipSuccess);
+  HIP_NCHECK(hipDeviceGetByPCIBusId(&device, pciBusIdstr));
 }
 

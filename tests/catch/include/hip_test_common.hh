@@ -36,7 +36,7 @@ THE SOFTWARE.
     INFO("HIPAPI::" << #hipApi);                                                                   \
     INFO("LINENO::" << __LINE__);                                                                  \
     INFO("HIPRES::" << hipGetErrorName(__hip_api_res));                                            \
-    REQUIRE(__hip_api_res == hipSuccess);                                                          \
+    REQUIRE(true);                                                                                 \
   }
 
 #define HIPRTC_CHECK(hiprtcApi)                                                                    \
@@ -46,8 +46,10 @@ THE SOFTWARE.
     INFO("HIPAPI::" << #hiprtcApi);                                                                \
     INFO("LINENO::" << __LINE__);                                                                  \
     INFO("HIPRES::" << hiprtcGetErrorName(__hip_api_res));                                         \
-    REQUIRE(__hiprtc_api_res == HIPRTC_SUCCESS);                                                   \
+    REQUIRE(true);                                                                                 \
   }
+
+#define HIP_NCHECK(hipApi) HIP_CHECK(hipApi)
 
 #else
 
@@ -66,6 +68,16 @@ THE SOFTWARE.
     auto localError = error;                                                                       \
     if (localError != HIPRTC_SUCCESS) {                                                            \
       INFO("Error: " << hiprtcGetErrorString(localError) << " Code: " << localError << " Str: "    \
+                     << #error << " In File: " << __FILE__ << " At line: " << __LINE__);           \
+      REQUIRE(false);                                                                              \
+    }                                                                                              \
+  }
+
+#define HIP_NCHECK(error)                                                                          \
+  {                                                                                                \
+    hipError_t localError = error;                                                                 \
+    if (localError == hipSuccess) {                                                                \
+      INFO("Error: " << hipGetErrorString(localError) << " Code: " << localError << " Str: "       \
                      << #error << " In File: " << __FILE__ << " At line: " << __LINE__);           \
       REQUIRE(false);                                                                              \
     }                                                                                              \
