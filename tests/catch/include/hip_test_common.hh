@@ -57,8 +57,8 @@ THE SOFTWARE.
     INFO("LINENO::" << __LINE__);                                                                  \
     INFO("RESULTNAME::" << name);                                                                  \
     INFO("RESULT::" << result);                                                                    \
-    REQUIRE(true);
-}
+    REQUIRE(true);                                                                                 \
+  }
 
 #else
 
