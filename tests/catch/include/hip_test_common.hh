@@ -51,6 +51,15 @@ THE SOFTWARE.
 
 #define HIP_NCHECK(hipApi) HIP_CHECK(hipApi)
 
+#define HIP_LOG_RESULT(result, name)                                                               \
+  {                                                                                                \
+    INFO("FILE::" << __FILE__);                                                                    \
+    INFO("LINENO::" << __LINE__);                                                                  \
+    INFO("RESULTNAME::" << name);                                                                  \
+    INFO("RESULT::" << result);                                                                    \
+    REQUIRE(true);
+}
+
 #else
 
 #define HIP_CHECK(error)                                                                           \
@@ -82,6 +91,8 @@ THE SOFTWARE.
       REQUIRE(false);                                                                              \
     }                                                                                              \
   }
+
+#define HIP_LOG_RESULT(result, name)
 
 #endif
 

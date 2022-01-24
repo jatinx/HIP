@@ -2,6 +2,7 @@
 set(TEST_SRC
     add.cc
     hipHostMTest.cc
+    sinRange.cc
 )
 
 hip_add_exe_to_target(NAME ABMAddKernels
