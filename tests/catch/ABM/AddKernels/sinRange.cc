@@ -9,7 +9,7 @@ TEST_CASE("ABM_sin_range", "") {
 
   auto lambda = [] __device__ (float* a) { *a = asinf(*a); };
 
-  for (int i = 100; i <= 300; i+=5) {
+  for (int i = -101; i <= 101; i++) {
     float val = i / 100.;
     float res = 0.0f;
     HIP_CHECK(hipMemcpy(dval, &val, sizeof(float), hipMemcpyHostToDevice));
@@ -27,7 +27,7 @@ TEST_CASE("ABM_cos_range", "") {
 
   auto lambda = [] __device__ (float* a) { *a = acosf(*a); };
 
-  for (int i = 100; i <= 300; i+=5) {
+  for (int i = -101; i <= 101; i++) {
     float val = i / 100.;
     float res = 0.0f;
     HIP_CHECK(hipMemcpy(dval, &val, sizeof(float), hipMemcpyHostToDevice));

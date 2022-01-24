@@ -56,7 +56,7 @@ THE SOFTWARE.
     INFO("FILE::" << __FILE__);                                                                    \
     INFO("HIPAPI::" << name);                                                                      \
     INFO("LINENO::" << __LINE__);                                                                  \
-    INFO("RESULT::" << result);                                                                    \
+    INFO("HIPRES::" << result);                                                                    \
     REQUIRE(true);                                                                                 \
   }
 
