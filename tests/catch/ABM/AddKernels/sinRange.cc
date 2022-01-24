@@ -7,7 +7,7 @@ TEST_CASE("ABM_sin_range", "") {
   float* dval;
   HIP_CHECK(hipMalloc(&dval, sizeof(float)));
 
-  auto lambda = __device__[](float* a) { *a = asinf(*a); };
+  auto lambda = [] __device__ (float* a) { *a = asinf(*a); };
 
   for (int i = 100; i <= 1000; i++) {
     float val = i / 100.0f;
