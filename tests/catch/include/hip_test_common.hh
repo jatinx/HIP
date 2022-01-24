@@ -54,8 +54,8 @@ THE SOFTWARE.
 #define HIP_LOG_RESULT(result, name)                                                               \
   {                                                                                                \
     INFO("FILE::" << __FILE__);                                                                    \
+    INFO("HIPAPI::" << name);                                                                      \
     INFO("LINENO::" << __LINE__);                                                                  \
-    INFO("RESULTNAME::" << name);                                                                  \
     INFO("RESULT::" << result);                                                                    \
     REQUIRE(true);                                                                                 \
   }

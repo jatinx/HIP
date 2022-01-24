@@ -9,13 +9,31 @@ TEST_CASE("ABM_sin_range", "") {
 
   auto lambda = [] __device__ (float* a) { *a = asinf(*a); };
 
-  for (int i = 100; i <= 1000; i++) {
-    float val = i / 100.0f;
+  for (int i = 100; i <= 300; i++) {
+    float val = i / 100.;
+    float res = 0.0f;
     HIP_CHECK(hipMemcpy(dval, &val, sizeof(float), hipMemcpyHostToDevice));
-    auto k = kernel<lambda>;
-    k<<<1, 1>>>(dval);
-    HIP_CHECK(hipMemcpy(&val, dval, sizeof(float), hipMemcpyDeviceToHost));
-    HIP_LOG_RESULT(val, "SinResult")
+    kernel<<<1, 1>>>(dval, lambda);
+    HIP_CHECK(hipMemcpy(&res, dval, sizeof(float), hipMemcpyDeviceToHost));
+    HIP_LOG_RESULT(val, std::to_string(res) + "SinResult")
+  }
+  HIP_CHECK(hipFree(dval));
+}
+
+
+TEST_CASE("ABM_cos_range", "") {
+  float* dval;
+  HIP_CHECK(hipMalloc(&dval, sizeof(float)));
+
+  auto lambda = [] __device__ (float* a) { *a = acosf(*a); };
+
+  for (int i = 100; i <= 300; i++) {
+    float val = i / 100.;
+    float res = 0.0f;
+    HIP_CHECK(hipMemcpy(dval, &val, sizeof(float), hipMemcpyHostToDevice));
+    kernel<<<1, 1>>>(dval, lambda);
+    HIP_CHECK(hipMemcpy(&res, dval, sizeof(float), hipMemcpyDeviceToHost));
+    HIP_LOG_RESULT(val, std::to_string(res) + "CosResult")
   }
   HIP_CHECK(hipFree(dval));
 }
