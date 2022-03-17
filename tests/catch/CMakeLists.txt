@@ -125,6 +125,11 @@ if(NOT DEFINED OFFLOAD_ARCH_STR AND EXISTS "${ROCM_PATH}/bin/rocm_agent_enumerat
     endif()
 endif()
 
+# Enable device lambda on nvidia platforms
+if(HIP_COMPILER MATCHES "nvcc")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --extended-lambda")
+endif()
+
 if(DEFINED OFFLOAD_ARCH_STR)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OFFLOAD_ARCH_STR} ")
 endif()

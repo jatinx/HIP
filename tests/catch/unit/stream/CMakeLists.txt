@@ -8,6 +8,7 @@ set(TEST_SRC
     hipStreamCreateWithFlags.cc
     hipStreamCreateWithPriority.cc
     hipStreamGetCUMask.cc
+    hipStreamWaitEvent.cc
     hipAPIStreamDisable.cc
     streamCommon.cc
 )
@@ -29,6 +30,7 @@ set(TEST_SRC
     hipStreamAddCallback.cc
     hipStreamCreateWithFlags.cc
     hipStreamCreateWithPriority.cc
+    hipStreamWaitEvent.cc
     hipAPIStreamDisable.cc
     streamCommon.cc
 )
