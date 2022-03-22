@@ -84,7 +84,6 @@ THE SOFTWARE.
     abort();                                                                                       \
   }
 
-
 // Utility Functions
 namespace HipTest {
 static inline int getDeviceCount() {
@@ -124,5 +123,14 @@ static inline int RAND_R(unsigned* rand_seed) {
 #else
   return rand_r(rand_seed);
 #endif
+}
+
+/**
+ * Causes the test to stop and be skipped at runtime.
+ * reason: Message describing the reason the test has been skipped.
+ */
+inline void HIP_SKIP_TEST(char const* const reason) noexcept {
+  UNSCOPED_INFO("Skipping test. Reason: " << reason);
+  std::cout << "HIP_SKIP_THIS_TEST" << std::endl;
 }
 }  // namespace HipTest
