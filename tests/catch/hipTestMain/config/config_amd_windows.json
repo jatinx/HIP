@@ -19,6 +19,8 @@
 	   "Unit_hipMallocManaged_DeviceContextChange - float",
 	   "Unit_hipMallocManaged_DeviceContextChange - double",
 	   "Unit_hipHostMalloc_CoherentTst",
+	   "Unit_hipHostUnregister_NotRegisteredPointer",
+	   "Unit_hipHostUnregister_AlreadyUnregisteredPointer",
 	   "Unit_hipMallocManaged_CoherentTst",
 	   "Unit_hipMallocManaged_CoherentTstWthAdvise",
 	   "Unit_hipMalloc_CoherentTst",
