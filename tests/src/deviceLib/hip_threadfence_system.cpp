@@ -39,27 +39,27 @@ THE SOFTWARE.
 
 __host__ __device__ void fence_system() {
 #ifdef __HIP_DEVICE_COMPILE__
-    __threadfence_system();
+  __threadfence_system();
 #else
-    std::atomic_thread_fence(std::memory_order_seq_cst);
+  std::atomic_thread_fence(std::memory_order_seq_cst);
 #endif
 }
 
 __host__ __device__ void round_robin(const int id, const int num_dev, const int num_iter,
                                      volatile int* data, volatile int* flag) {
-    for (int i = 0; i < num_iter; i++) {
-        while (*flag % num_dev != id) fence_system();  // invalid the cache for read
+  for (int i = 0; i < num_iter; i++) {
+    while (*flag % num_dev != id) fence_system();  // invalid the cache for read
 
-        (*data)++;
-        fence_system();  // make sure the store to data is sequenced before the store to flag
-        (*flag)++;
-        fence_system();  // invalid the cache to flush out flag
-    }
+    (*data)++;
+    fence_system();  // make sure the store to data is sequenced before the store to flag
+    (*flag)++;
+    fence_system();  // invalid the cache to flush out flag
+  }
 }
 
 __global__ void gpu_round_robin(const int id, const int num_dev, const int num_iter,
                                 volatile int* data, volatile int* flag) {
-    round_robin(id, num_dev, num_iter, data, flag);
+  round_robin(id, num_dev, num_iter, data, flag);
 }
 
 int main() {
@@ -106,12 +106,12 @@ int main() {
 
     // launch one kernel per device for the round robin
     for (; next_id < num_dev; ++next_id) {
-        threads.push_back(std::thread([=]() {
-            HIP_ASSERT(hipSetDevice(next_id - 1));
-            hipLaunchKernelGGL(gpu_round_robin, dim_grid, dim_block, 0, 0x0, next_id, num_dev,
-                               num_iter, data, flag);
-            HIP_ASSERT(hipDeviceSynchronize());
-        }));
+      threads.push_back(std::thread([=]() {
+        HIP_ASSERT(hipSetDevice(next_id - 1));
+        hipLaunchKernelGGL(gpu_round_robin, dim_grid, dim_block, 0, 0x0, next_id, num_dev, num_iter,
+                           data, flag);
+        HIP_ASSERT(hipDeviceSynchronize());
+      }));
     }
 
     for (auto& t : threads) {

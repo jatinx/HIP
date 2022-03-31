@@ -44,13 +44,12 @@ extern "C" __global__ void WaitKernel(int *Ad, int clockrate) {
   *Ad = 1;
 }
 
-void t1(hipEvent_t start, hipStream_t stream1, int clkRate, int *A, int *Ad) {
+void t1(hipEvent_t start, hipStream_t stream1, int clkRate, int* A, int* Ad) {
   *A = 0;
 
   hipLaunchKernelGGL(HIP_KERNEL_NAME(WaitKernel), dim3(1), dim3(1), 0, stream1, Ad, clkRate);
 
   HIPCHECK(hipEventRecord(start, stream1));
-
 }
 
 int main(int argc, char* argv[]) {

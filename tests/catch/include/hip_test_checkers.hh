@@ -185,7 +185,111 @@ bool initArrays(T** A_d, T** B_d, T** C_d, T** A_h, T** B_h, T** C_h, size_t N,
   return initArraysForHost(A_h, B_h, C_h, N, usePinnedHost);
 }
 
-template <typename T> bool freeArraysForHost(T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
+// Threaded version of setDefaultData to be called from multi thread tests
+// Call HIP_CHECK_THREAD_FINALIZE after joining
+template <typename T> void setDefaultDataT(size_t numElements, T* A_h, T* B_h, T* C_h) {
+  // Initialize the host data:
+
+  for (size_t i = 0; i < numElements; i++) {
+    if (std::is_same<T, int>::value || std::is_same<T, unsigned int>::value) {
+      if (A_h) A_h[i] = 3;
+      if (B_h) B_h[i] = 4;
+      if (C_h) C_h[i] = 5;
+    } else if (std::is_same<T, char>::value || std::is_same<T, unsigned char>::value) {
+      if (A_h) A_h[i] = 'a';
+      if (B_h) B_h[i] = 'b';
+      if (C_h) C_h[i] = 'c';
+    } else {
+      if (A_h) A_h[i] = 3.146f + i;
+      if (B_h) B_h[i] = 1.618f + i;
+      if (C_h) C_h[i] = 1.4f + i;
+    }
+  }
+}
+
+// Threaded version of initArraysForHost to be called from multi thread tests
+// Call HIP_CHECK_THREAD_FINALIZE after joining
+template <typename T>
+void initArraysForHostT(T** A_h, T** B_h, T** C_h, size_t N, bool usePinnedHost = false) {
+  size_t Nbytes = N * sizeof(T);
+
+  if (usePinnedHost) {
+    if (A_h) {
+      HIP_CHECK_THREAD(hipHostMalloc((void**)A_h, Nbytes));
+    }
+    if (B_h) {
+      HIP_CHECK_THREAD(hipHostMalloc((void**)B_h, Nbytes));
+    }
+    if (C_h) {
+      HIP_CHECK_THREAD(hipHostMalloc((void**)C_h, Nbytes));
+    }
+  } else {
+    if (A_h) {
+      *A_h = (T*)malloc(Nbytes);
+      REQUIRE_THREAD(*A_h != nullptr);
+    }
+
+    if (B_h) {
+      *B_h = (T*)malloc(Nbytes);
+      REQUIRE_THREAD(*B_h != nullptr);
+    }
+
+    if (C_h) {
+      *C_h = (T*)malloc(Nbytes);
+      REQUIRE_THREAD(*C_h != nullptr);
+    }
+  }
+
+  setDefaultDataT(N, A_h ? *A_h : nullptr, B_h ? *B_h : nullptr, C_h ? *C_h : nullptr);
+}
+
+// Threaded version of initArrays to be called from multi thread tests
+// Call HIP_CHECK_THREAD_FINALIZE after joining
+template <typename T>
+void initArraysT(T** A_d, T** B_d, T** C_d, T** A_h, T** B_h, T** C_h, size_t N,
+                bool usePinnedHost = false) {
+  size_t Nbytes = N * sizeof(T);
+
+  if (A_d) {
+    HIP_CHECK_THREAD(hipMalloc(A_d, Nbytes));
+  }
+  if (B_d) {
+    HIP_CHECK_THREAD(hipMalloc(B_d, Nbytes));
+  }
+  if (C_d) {
+    HIP_CHECK_THREAD(hipMalloc(C_d, Nbytes));
+  }
+
+  initArraysForHostT(A_h, B_h, C_h, N, usePinnedHost);
+}
+
+// Threaded version of freeArraysForHost to be called from multi thread tests
+// Call HIP_CHECK_THREAD_FINALIZE after joining
+template <typename T> void freeArraysForHostT(T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
+  if (usePinnedHost) {
+    if (A_h) {
+      HIP_CHECK_THREAD(hipHostFree(A_h));
+    }
+    if (B_h) {
+      HIP_CHECK_THREAD(hipHostFree(B_h));
+    }
+    if (C_h) {
+      HIP_CHECK_THREAD(hipHostFree(C_h));
+    }
+  } else {
+    if (A_h) {
+      free(A_h);
+    }
+    if (B_h) {
+      free(B_h);
+    }
+    if (C_h) {
+      free(C_h);
+    }
+  }
+}
+
+template <typename T> void freeArraysForHost(T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
   if (usePinnedHost) {
     if (A_h) {
       HIP_CHECK(hipHostFree(A_h));
@@ -207,11 +311,25 @@ template <typename T> bool freeArraysForHost(T* A_h, T* B_h, T* C_h, bool usePin
       free(C_h);
     }
   }
-  return true;
 }
 
 template <typename T>
-bool freeArrays(T* A_d, T* B_d, T* C_d, T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
+void freeArraysT(T* A_d, T* B_d, T* C_d, T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
+  if (A_d) {
+    HIP_CHECK_THREAD(hipFree(A_d));
+  }
+  if (B_d) {
+    HIP_CHECK_THREAD(hipFree(B_d));
+  }
+  if (C_d) {
+    HIP_CHECK_THREAD(hipFree(C_d));
+  }
+
+  freeArraysForHostT(A_h, B_h, C_h, usePinnedHost);
+}
+
+template <typename T>
+void freeArrays(T* A_d, T* B_d, T* C_d, T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
   if (A_d) {
     HIP_CHECK(hipFree(A_d));
   }
@@ -222,22 +340,7 @@ bool freeArrays(T* A_d, T* B_d, T* C_d, T* A_h, T* B_h, T* C_h, bool usePinnedHo
     HIP_CHECK(hipFree(C_d));
   }
 
-  return freeArraysForHost(A_h, B_h, C_h, usePinnedHost);
-}
-
-template <typename T>
-unsigned setNumBlocks(T blocksPerCU, T threadsPerBlock,
-    size_t N) {
-  int device;
-  HIP_CHECK(hipGetDevice(&device));
-  hipDeviceProp_t props;
-  HIP_CHECK(hipGetDeviceProperties(&props, device));
-
-  unsigned blocks = props.multiProcessorCount * blocksPerCU;
-  if (blocks * threadsPerBlock > N) {
-    blocks = (N + threadsPerBlock - 1) / threadsPerBlock;
-  }
-  return blocks;
+  freeArraysForHost(A_h, B_h, C_h, usePinnedHost);
 }
 template<typename T>
 static bool assemblyFile_Verification(std::string assemfilename, std::string inst) {

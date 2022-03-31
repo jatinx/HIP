@@ -72,20 +72,20 @@ static __global__ void func_set_value(hipPitchedPtr devicePitchedPointer,
 /**
  * Thread function queues kernel function and memset cmds
  */
-static void threadFunc(hipStream_t stream, hipPitchedPtr devpPtr,
-      int memsetval, int testval, hipExtent extent, hipMemcpy3DParms myparms) {
+static void threadFunc(hipStream_t stream, hipPitchedPtr devpPtr, int memsetval, int testval,
+                       hipExtent extent, hipMemcpy3DParms myparms) {
   // Kernel Launch Configuration
   constexpr auto size = 8;
   dim3 threadsPerBlock = dim3(size, size, size);
-  dim3 blocks;
+  dim3 blocks{};
   blocks = dim3((extent.width + threadsPerBlock.x - 1) / threadsPerBlock.x,
                 (extent.height + threadsPerBlock.y - 1) / threadsPerBlock.y,
                 (extent.depth + threadsPerBlock.z - 1) / threadsPerBlock.z);
 
-  hipLaunchKernelGGL(func_set_value, dim3(blocks), dim3(threadsPerBlock), 0,
-                     stream, devpPtr, extent, memsetval);
-  HIPCHECK(hipMemset3DAsync(devpPtr, testval, extent, stream));
-  HIPCHECK(hipMemcpy3DAsync(&myparms, stream));
+  hipLaunchKernelGGL(func_set_value, dim3(blocks), dim3(threadsPerBlock), 0, stream, devpPtr,
+                     extent, memsetval);
+  HIP_CHECK_THREAD(hipMemset3DAsync(devpPtr, testval, extent, stream));
+  HIP_CHECK_THREAD(hipMemcpy3DAsync(&myparms, stream));
 }
 
 
@@ -250,6 +250,8 @@ TEST_CASE("Unit_hipMemset3DAsync_ConcurrencyMthread") {
   for (auto &t : threadlist) {
     t.join();
   }
+
+  HIP_CHECK_THREAD_FINALIZE();
 
   HIP_CHECK(hipStreamSynchronize(stream));
 

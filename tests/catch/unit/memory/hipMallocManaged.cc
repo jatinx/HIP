@@ -137,8 +137,7 @@ TEST_CASE("Unit_hipMallocManaged_Advanced") {
       SUCCEED("hipMemRangeGetAttribute error, read_only = " << read_only);
     }
 
-    unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock,
-                                            numElements);
+    unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, numElements);
     hipEvent_t event0, event1;
     HIP_CHECK(hipEventCreate(&event0));
     HIP_CHECK(hipEventCreate(&event1));

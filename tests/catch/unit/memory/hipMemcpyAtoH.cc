@@ -76,11 +76,9 @@ TEMPLATE_TEST_CASE("Unit_hipMemcpyAtoH_Basic", "[hipMemcpyAtoH]",
   // DeAllocating the memory
   HIP_CHECK(hipFreeArray(A_d));
   if (memtype_check) {
-    REQUIRE(HipTest::freeArrays<TestType>(nullptr, nullptr, nullptr, hData, B_h,
-                                           nullptr, true) == true);
+    HipTest::freeArrays<TestType>(nullptr, nullptr, nullptr, hData, B_h, nullptr, true);
   } else {
-    REQUIRE(HipTest::freeArrays<TestType>(nullptr, nullptr, nullptr, hData, B_h,
-                                           nullptr, false) == true);
+    HipTest::freeArrays<TestType>(nullptr, nullptr, nullptr, hData, B_h, nullptr, false);
   }
 }
 
@@ -130,9 +128,7 @@ TEMPLATE_TEST_CASE("Unit_hipMemcpyAtoH_multiDevice-PeerDeviceContext",
 
       // DeAllocating the memory
       HIP_CHECK(hipFreeArray(A_d));
-      REQUIRE(HipTest::freeArrays<TestType>(nullptr, nullptr, nullptr,
-                                            hData, B_h,
-                                            nullptr, false) == true);
+      HipTest::freeArrays<TestType>(nullptr, nullptr, nullptr, hData, B_h, nullptr, false);
     }
   } else {
     SUCCEED("skipping the testcases as numDevices < 2");
@@ -173,8 +169,7 @@ TEST_CASE("Unit_hipMemcpyAtoH_Negative") {
 
   // DeAllocating the memory
   HIP_CHECK(hipFreeArray(A_d));
-  REQUIRE(HipTest::freeArrays<float>(nullptr, nullptr, nullptr, hData, B_h,
-                                      nullptr, false) == true);
+  HipTest::freeArrays<float>(nullptr, nullptr, nullptr, hData, B_h, nullptr, false);
 }
 
 /*
@@ -213,7 +208,6 @@ TEST_CASE("Unit_hipMemcpyAtoH_SizeCheck") {
 
   // DeAllocating the memory
   HIP_CHECK(hipFreeArray(A_d));
-  REQUIRE(HipTest::freeArrays<float>(nullptr, nullptr, nullptr, hData, B_h,
-                                      def_data, false) == true);
+  HipTest::freeArrays<float>(nullptr, nullptr, nullptr, hData, B_h, def_data, false);
 }
 #endif

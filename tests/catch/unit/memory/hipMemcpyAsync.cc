@@ -34,57 +34,47 @@ This testcase verifies the following scenarios
 #define NUM_THREADS 16
 
 static constexpr auto NUM_ELM{1024 * 1024};
-
-
-
 static constexpr size_t N_ELMTS{32 * 1024};
 std::atomic<size_t> Thread_count { 0 };
 static unsigned blocksPerCU{6};  // to hide latency
 static unsigned threadsPerBlock{256};
 
-template<typename T>
-void Thread_func(T *A_d, T *B_d, T* C_d, T* C_h, size_t Nbytes,
-                 hipStream_t mystream) {
-  unsigned blocks = HipTest::setNumBlocks(blocksPerCU,
-                                          threadsPerBlock, N_ELMTS);
-  hipLaunchKernelGGL(HipTest::vector_square, dim3(blocks),
-                     dim3(threadsPerBlock), 0,
-                     mystream, A_d, C_d, N_ELMTS);
-  HIP_CHECK(hipMemcpyAsync(C_h, C_d, Nbytes, hipMemcpyDeviceToHost, mystream));
+template <typename T>
+void Thread_func(T* A_d, T* B_d, T* C_d, T* C_h, size_t Nbytes, hipStream_t mystream) {
+  unsigned blocks = 0;
+  HipTest::setNumBlocksThread(blocksPerCU, threadsPerBlock, N_ELMTS, blocks);
+  hipLaunchKernelGGL(HipTest::vector_square, dim3(blocks), dim3(threadsPerBlock), 0, mystream, A_d,
+                     C_d, N_ELMTS);
+  HIP_CHECK_THREAD(hipMemcpyAsync(C_h, C_d, Nbytes, hipMemcpyDeviceToHost, mystream));
   // The following two MemcpyAsync calls are for sole
   // purpose of loading stream with multiple async calls
-  HIP_CHECK(hipMemcpyAsync(B_d, A_d, Nbytes,
-                           hipMemcpyDeviceToDevice, mystream));
-  HIP_CHECK(hipMemcpyAsync(B_d, A_d, Nbytes,
-                           hipMemcpyDeviceToDevice, mystream));
+  HIP_CHECK_THREAD(hipMemcpyAsync(B_d, A_d, Nbytes, hipMemcpyDeviceToDevice, mystream));
+  HIP_CHECK_THREAD(hipMemcpyAsync(B_d, A_d, Nbytes, hipMemcpyDeviceToDevice, mystream));
   Thread_count++;
 }
 
-template<typename T>
-void Thread_func_MultiStream() {
+template <typename T> void Thread_func_MultiStream() {
   int Data_mismatch = 0;
   T *A_d{nullptr}, *B_d{nullptr}, *C_d{nullptr};
   T *A_h{nullptr}, *B_h{nullptr}, *C_h{nullptr};
   size_t Nbytes = N_ELMTS * sizeof(T);
-  unsigned blocks = HipTest::setNumBlocks(blocksPerCU,
-                                          threadsPerBlock, N_ELMTS);
+  unsigned blocks = 0;
+  HipTest::setNumBlocksThread(blocksPerCU, threadsPerBlock, N_ELMTS, blocks);
 
-  HipTest::initArrays(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N_ELMTS, false);
+  HipTest::initArraysT(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N_ELMTS, false);
   hipStream_t mystream;
-  HIP_CHECK(hipStreamCreateWithFlags(&mystream, hipStreamNonBlocking));
-  HIP_CHECK(hipMemcpyAsync(A_d, A_h, Nbytes, hipMemcpyHostToDevice, mystream));
-  hipLaunchKernelGGL((HipTest::vector_square), dim3(blocks),
-                     dim3(threadsPerBlock), 0,
-                     mystream, A_d, C_d, N_ELMTS);
-  HIP_CHECK(hipMemcpyAsync(C_h, C_d, Nbytes, hipMemcpyDeviceToHost, mystream));
+  HIP_CHECK_THREAD(hipStreamCreateWithFlags(&mystream, hipStreamNonBlocking));
+  HIP_CHECK_THREAD(hipMemcpyAsync(A_d, A_h, Nbytes, hipMemcpyHostToDevice, mystream));
+  hipLaunchKernelGGL((HipTest::vector_square), dim3(blocks), dim3(threadsPerBlock), 0, mystream,
+                     A_d, C_d, N_ELMTS);
+  HIP_CHECK_THREAD(hipMemcpyAsync(C_h, C_d, Nbytes, hipMemcpyDeviceToHost, mystream));
   // The following hipMemcpyAsync() is called only to
   // load stream with multiple Async calls
-  HIP_CHECK(hipMemcpyAsync(B_d, A_d, Nbytes,
-                           hipMemcpyDeviceToDevice, mystream));
+  HIP_CHECK_THREAD(hipMemcpyAsync(B_d, A_d, Nbytes, hipMemcpyDeviceToDevice, mystream));
   Thread_count++;
 
-  HIP_CHECK(hipStreamSynchronize(mystream));
-  HIP_CHECK(hipStreamDestroy(mystream));
+  HIP_CHECK_THREAD(hipStreamSynchronize(mystream));
+  HIP_CHECK_THREAD(hipStreamDestroy(mystream));
   // Verifying result of the kernel computation
   for (size_t i = 0; i < N_ELMTS; i++) {
     if (C_h[i] != A_h[i] * A_h[i]) {
@@ -92,8 +82,8 @@ void Thread_func_MultiStream() {
     }
   }
   // Releasing resources
-  HipTest::freeArrays<T>(A_d, B_d, C_d, A_h, B_h, C_h, false);
-  REQUIRE(Data_mismatch == 0);
+  HipTest::freeArraysT<T>(A_d, B_d, C_d, A_h, B_h, C_h, false);
+  REQUIRE_THREAD(Data_mismatch == 0);
 }
 
 /*
@@ -273,6 +263,8 @@ TEMPLATE_TEST_CASE("Unit_hipMemcpyAsync_hipMultiMemcpyMultiThread", "",
     T[i].join();
   }
 
+  HIP_CHECK_THREAD_FINALIZE();
+
   HIP_CHECK(hipStreamSynchronize(mystream));
   HIP_CHECK(hipStreamDestroy(mystream));
 
@@ -288,8 +280,8 @@ TEMPLATE_TEST_CASE("Unit_hipMemcpyAsync_hipMultiMemcpyMultiThread", "",
   Thread_count.exchange(0);
 }
 
-TEMPLATE_TEST_CASE("Unit_hipMemcpyAsync_hipMultiMemcpyMultiThreadMultiStream",
-                   "", int, float, double) {
+TEMPLATE_TEST_CASE("Unit_hipMemcpyAsync_hipMultiMemcpyMultiThreadMultiStream", "", int, float,
+                   double) {
   std::thread T[NUM_THREADS];
   for (int i = 0; i < NUM_THREADS; i++) {
     T[i] = std::thread(Thread_func_MultiStream<TestType>);
@@ -299,6 +291,8 @@ TEMPLATE_TEST_CASE("Unit_hipMemcpyAsync_hipMultiMemcpyMultiThreadMultiStream",
   for (int i = 0; i < NUM_THREADS; i++) {
     T[i].join();
   }
+
+  HIP_CHECK_THREAD_FINALIZE();
 
   REQUIRE(Thread_count.load() == NUM_THREADS);
   Thread_count.exchange(0);
@@ -320,8 +314,7 @@ TEMPLATE_TEST_CASE("Unit_hipMemcpyAsync_PinnedRegMemWithKernelLaunch",
     // 2 refers to register Memory
     int MallocPinType = GENERATE(0, 1);
     size_t Nbytes = NUM_ELM * sizeof(TestType);
-    unsigned blocks = HipTest::setNumBlocks(blocksPerCU,
-                                            threadsPerBlock, NUM_ELM);
+    unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, NUM_ELM);
 
     TestType *A_d{nullptr}, *B_d{nullptr}, *C_d{nullptr};
     TestType *X_d{nullptr}, *Y_d{nullptr}, *Z_d{nullptr};
