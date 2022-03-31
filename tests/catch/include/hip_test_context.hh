@@ -25,6 +25,8 @@ THE SOFTWARE.
 #include <vector>
 #include <string>
 #include <set>
+#include <thread>
+#include <mutex>
 
 #if defined(_WIN32)
 #define HT_WIN 1
@@ -57,10 +59,21 @@ static int _log_enable = (std::getenv("HT_LOG_ENABLE") ? 1 : 0);
   }
 
 typedef struct Config_ {
-  std::string json_file;              // Json file
-  std::string platform;               // amd/nvidia
-  std::string os;                     // windows/linux
+  std::string json_file;  // Json file
+  std::string platform;   // amd/nvidia
+  std::string os;         // windows/linux
 } Config;
+
+struct HCResult {
+  size_t line;
+  std::string file;
+  hipError_t result;
+  std::string call;
+  HCResult(size_t l, std::string f, hipError_t r, std::string c)
+      : line(l), file(f), result(r), call(c) {}
+};
+
+std::mutex resultMutex;
 
 class TestContext {
   bool p_windows = false, p_linux = false;  // OS
@@ -69,14 +82,15 @@ class TestContext {
   std::string current_test;
   std::set<std::string> skip_test;
   std::string json_file_;
-  std::vector<std::string>  platform_list_ = {"amd" , "nvidia"};
-  std::vector<std::string>  os_list_ = {"windows", "linux", "all"};
-  std::vector<std::string>  amd_arch_list_ = {};
+  std::vector<std::string> platform_list_ = {"amd", "nvidia"};
+  std::vector<std::string> os_list_ = {"windows", "linux", "all"};
+  std::vector<std::string> amd_arch_list_ = {};
+  std::vector<HCResult> results_;
+  std::thread::id this_id;
 
   Config config_;
   std::string& getJsonFile();
-  std::string substringFound( std::vector<std::string> list,
-                              std::string filename);
+  std::string substringFound(std::vector<std::string> list, std::string filename);
   void detectOS();
   void detectPlatform();
   void fillConfig();
@@ -103,6 +117,11 @@ class TestContext {
   const std::string& getCurrentTest() const { return current_test; }
   std::string currentPath() const;
 
+  void addResult(size_t line, std::string file, hipError_t res, std::string call);
+  void validateResults();
+
   TestContext(const TestContext&) = delete;
   void operator=(const TestContext&) = delete;
+
+  ~TestContext() { validateResults(); }
 };
