@@ -34,3 +34,5 @@ add_subdirectory(printf)
 add_subdirectory(printfExe)
 add_subdirectory(texture)
 add_subdirectory(streamperthread)
+
+add_subdirectory(demo)

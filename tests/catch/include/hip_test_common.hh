@@ -25,6 +25,8 @@ THE SOFTWARE.
 #include <catch.hpp>
 #include <stdlib.h>
 
+#include <mutex>
+
 #define HIP_PRINT_STATUS(status) INFO(hipGetErrorName(status) << " at line: " << __LINE__);
 
 #define HIP_CHECK(error)                                                                           \
@@ -47,6 +49,42 @@ THE SOFTWARE.
          << " Actual Code:   " << localError << "\nStr: " << #errorExpr                            \
          << "\nIn File: " << __FILE__ << " At line: " << __LINE__);                                \
     REQUIRE(localError == expectedError);                                                          \
+  }
+
+namespace internal {
+struct HCResult {
+  size_t line;
+  std::string file;
+  hipError_t result;
+  std::string call;
+  HCResult(size_t l, std::string f, hipError_t r, std::string c)
+      : line(l), file(f), result(r), call(c) {}
+};
+
+extern std::vector<HCResult> results_;
+
+extern std::mutex resultMutex;
+}  // namespace internal
+
+// Threaded HIP_CHECKs
+#define HIP_CHECK_THREAD(error)                                                                    \
+  {                                                                                                \
+    auto localError = error;                                                                       \
+    internal::HCResult result(__LINE__, __FILE__, localError, #error);                             \
+    { /* Scoped lock */                                                                            \
+      std::unique_lock<std::mutex> lock(internal::resultMutex);                                    \
+      internal::results_.push_back(result);                                                        \
+    }                                                                                              \
+  }
+
+#define HIP_CHECK_THREAD_FINALIZE()                                                                \
+  {                                                                                                \
+    for (const auto& i : internal::results_) {                                                     \
+      INFO("HIP API Result check\n    File:: "                                                     \
+           << i.file << "\n    Line:: " << i.line << "\n    API:: " << i.call << "\n    Result:: " \
+           << i.result << "\n    Result Str:: " << hipGetErrorString(i.result));                   \
+      REQUIRE(((i.result == hipSuccess) || (i.result == hipErrorPeerAccessAlreadyEnabled)));       \
+    }                                                                                              \
   }
 
 #define HIPRTC_CHECK(error)                                                                        \

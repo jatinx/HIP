@@ -2,6 +2,11 @@
 #include <hip_test_common.hh>
 #include <iostream>
 
+namespace internal {
+std::vector<HCResult> results_;
+std::mutex resultMutex;
+}  // namespace internal
+
 int main(int argc, char** argv) {
   auto& context = TestContext::get(argc, argv);
   if (context.skipTest()) {
