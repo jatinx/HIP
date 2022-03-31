@@ -36,9 +36,11 @@ THE SOFTWARE.
            << " In File: " << __FILE__ << " At line: " << __LINE__);                               \
       REQUIRE(((localError == hipSuccess) || (localError == hipErrorPeerAccessAlreadyEnabled)));   \
     } else { /* From a created thread*/                                                            \
-      TestContext::addResult(__LINE__, __FILE__, localError, #error);                              \
+      TestContext::get().addResult(__LINE__, __FILE__, localError, #error);                        \
     }                                                                                              \
   }
+
+#define HIP_TEST_THREAD_VALIDATE() { TestContext::get().validateResults(); }
 
 // Check that an expression, errorExpr, evaluates to the expected error_t, expectedError.
 #define HIP_CHECK_ERROR(errorExpr, expectedError)                                                  \

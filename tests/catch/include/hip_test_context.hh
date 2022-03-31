@@ -73,7 +73,6 @@ struct HCResult {
       : line(l), file(f), result(r), call(c) {}
 };
 
-std::mutex resultMutex;
 
 class TestContext {
   bool p_windows = false, p_linux = false;  // OS
@@ -103,7 +102,7 @@ class TestContext {
   TestContext(int argc, char** argv);
 
  public:
-  static const TestContext& get(int argc = 0, char** argv = nullptr) {
+  static TestContext& get(int argc = 0, char** argv = nullptr) {
     static TestContext instance(argc, argv);
     return instance;
   }
@@ -114,7 +113,7 @@ class TestContext {
   bool isAmd() const;
   bool skipTest() const;
 
-  auto mainThreadID() { return this_id; }
+  std::thread::id mainThreadID() { return this_id; }
 
   const std::string& getCurrentTest() const { return current_test; }
   std::string currentPath() const;
@@ -124,6 +123,4 @@ class TestContext {
 
   TestContext(const TestContext&) = delete;
   void operator=(const TestContext&) = delete;
-
-  ~TestContext() { validateResults(); }
 };

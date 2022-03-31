@@ -5,6 +5,8 @@
 #include <regex>
 #include "hip_test_filesystem.hh"
 
+std::mutex resultMutex;
+
 void TestContext::detectOS() {
 #if (HT_WIN == 1)
   p_windows = true;

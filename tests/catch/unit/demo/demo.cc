@@ -19,4 +19,5 @@ TEST_CASE("LetsGetThatBread?") {
   for (size_t i = 0; i < num; i++) {
     threadPool[i].join();
   }
+  HIP_TEST_THREAD_VALIDATE();
 }
