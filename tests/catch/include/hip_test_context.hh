@@ -114,6 +114,8 @@ class TestContext {
   bool isAmd() const;
   bool skipTest() const;
 
+  auto mainThreadID() { return this_id; }
+
   const std::string& getCurrentTest() const { return current_test; }
   std::string currentPath() const;
 

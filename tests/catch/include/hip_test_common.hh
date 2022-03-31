@@ -30,10 +30,14 @@ THE SOFTWARE.
 #define HIP_CHECK(error)                                                                           \
   {                                                                                                \
     hipError_t localError = error;                                                                 \
-    INFO("Matching Error to hipSuccess or hipErrorPeerAccessAlreadyEnabled: "                      \
-         << hipGetErrorString(localError) << " Code: " << localError << " Str: " << #error         \
-         << " In File: " << __FILE__ << " At line: " << __LINE__);                                 \
-    REQUIRE(((localError == hipSuccess) || (localError == hipErrorPeerAccessAlreadyEnabled)));     \
+    if (std::this_thread::get_id() == TestContext::get().mainThreadID()) { /* From Main thread*/   \
+      INFO("Matching Error to hipSuccess or hipErrorPeerAccessAlreadyEnabled: "                    \
+           << hipGetErrorString(localError) << " Code: " << localError << " Str: " << #error       \
+           << " In File: " << __FILE__ << " At line: " << __LINE__);                               \
+      REQUIRE(((localError == hipSuccess) || (localError == hipErrorPeerAccessAlreadyEnabled)));   \
+    } else { /* From a created thread*/                                                            \
+      TestContext::addResult(__LINE__, __FILE__, localError, #error);                              \
+    }                                                                                              \
   }
 
 // Check that an expression, errorExpr, evaluates to the expected error_t, expectedError.
