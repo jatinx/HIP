@@ -3,8 +3,9 @@
 #include <iostream>
 
 namespace internal {
-std::vector<HCResult> results_;
+std::vector<HCResult> hcResults;
 std::mutex resultMutex;
+std::atomic<bool> hasErrorOccured {false};
 }  // namespace internal
 
 int main(int argc, char** argv) {

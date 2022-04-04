@@ -23,8 +23,10 @@ THE SOFTWARE.
 #pragma once
 #include "hip_test_context.hh"
 #include <catch.hpp>
+#include <chrono>
 #include <stdlib.h>
-
+#include <iostream>
+#include <iomanip>
 #include <mutex>
 
 #define HIP_PRINT_STATUS(status) INFO(hipGetErrorName(status) << " at line: " << __LINE__);
@@ -61,30 +63,43 @@ struct HCResult {
       : line(l), file(f), result(r), call(c) {}
 };
 
-extern std::vector<HCResult> results_;
-
+extern std::vector<HCResult> hcResults;
 extern std::mutex resultMutex;
+extern std::atomic<bool> hasErrorOccured;
 }  // namespace internal
 
 // Threaded HIP_CHECKs
 #define HIP_CHECK_THREAD(error)                                                                    \
   {                                                                                                \
+    /*To see if error has occured in previous threads*/                                            \
+    if (internal::hasErrorOccured.load() == true) {                                                \
+      return; /*This will only work with std::thread and not with std::async*/                     \
+    }                                                                                              \
     auto localError = error;                                                                       \
+    if ((localError != hipSuccess) && (localError != hipErrorPeerAccessAlreadyEnabled)) {          \
+      internal::hasErrorOccured.store(true);                                                       \
+    }                                                                                              \
     internal::HCResult result(__LINE__, __FILE__, localError, #error);                             \
     { /* Scoped lock */                                                                            \
       std::unique_lock<std::mutex> lock(internal::resultMutex);                                    \
-      internal::results_.push_back(result);                                                        \
+      internal::hcResults.push_back(result);                                                       \
     }                                                                                              \
   }
 
+
+// Do not call before all threads have joined
 #define HIP_CHECK_THREAD_FINALIZE()                                                                \
   {                                                                                                \
-    for (const auto& i : internal::results_) {                                                     \
+    if (internal::hasErrorOccured.load() == true) {                                                \
+      UNSCOPED_INFO("Error has Occured");                                                          \
+    }                                                                                              \
+    for (const auto& i : internal::hcResults) {                                                    \
       INFO("HIP API Result check\n    File:: "                                                     \
            << i.file << "\n    Line:: " << i.line << "\n    API:: " << i.call << "\n    Result:: " \
            << i.result << "\n    Result Str:: " << hipGetErrorString(i.result));                   \
       REQUIRE(((i.result == hipSuccess) || (i.result == hipErrorPeerAccessAlreadyEnabled)));       \
     }                                                                                              \
+    internal::hcResults.clear();                                                                   \
   }
 
 #define HIPRTC_CHECK(error)                                                                        \
@@ -99,12 +114,6 @@ extern std::mutex resultMutex;
 // Although its assert, it will be evaluated at runtime
 #define HIP_ASSERT(x)                                                                              \
   { REQUIRE((x)); }
-
-#ifdef __cplusplus
-#include <iostream>
-#include <iomanip>
-#include <chrono>
-#endif
 
 #define HIPCHECK(error)                                                                            \
   {                                                                                                \

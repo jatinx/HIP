@@ -56,9 +56,69 @@ The schema of the json file is as follows:
 }
 ```
 
-## Env Variables
+## Environment Variables
 - `HT_CONFIG_FILE` : This variable can be set to the config file name or full path. Disabled tests will be read from this.
 - `HT_LOG_ENABLE` : This is for debugging the HIP Test Framework itself. Setting it to 1, all `LogPrintf` will be printed on screen
+
+## Test Macros
+### Single Thread Macros
+These macros are to be used when your test is calling HIP APIs via the main thread.
+
+- `HIP_CHECK` : This macro takes in a HIP API and tests for its result to be either ```hipSuccess``` or ```hipErrorPeerAccessAlreadyEnabled```.
+
+  - Usage: ```HIP_CHECK(hipMalloc(&dPtr, 10));```
+
+- ```HIP_CHECK_ERROR``` : This macro takes in a HIP API and tests its result against a provided result. This can be used when the API is expected to fail with a particular result.
+
+  - Usage: ```HIP_CHECK_ERROR(hipMalloc(&dPtr, 0), hipErrorInvalidValue);```
+
+- ```HIPRTC_CHECK``` : This macro takes in a HIPRTC API and tests its result against HIPRTC_SUCCESS.
+
+  - Usage: ```HIPRTC_CHECK(hiprtcCompileProgram(prog, count, options));```
+
+- ```HIP_ASSERT``` : This macro takes in a bool condition as input and does a ```REQUIRE``` on the condition.
+
+  - Usage: ```HIP_ASSERT(result == 10);```
+
+### Multi Thread Macros
+These macros are to be used when you call HIP APIs in a multi threaded way. They exist because Catch2 ```REQUIRE``` and ```CHECK``` macros can not handle multi threaded calls. To solve this problem, following macros log all results for HIP APIs called via ```HIP_CHECK_THREAD``` and validate them after the threads end via ```HIP_CHECK_THREAD_FINALIZE```.
+
+Note: These should used in ```std::thread``` only.
+
+- ```HIP_CHECK_THREAD``` : This macro takes in a HIP API and tests for its result to be either ```hipSuccess``` or ```hipErrorPeerAccessAlreadyEnabled```. It can also tell other threads if an error has occured in one of the HIP API and can prematurely stop the threads.
+
+- ```HIP_CHECK_THREAD_FINALIZE``` : This macro checks for the results logged by ```HIP_CHECK_THREAD```. This needs to be called after the threads have joined.
+
+  Usage:
+
+  ```cpp
+  auto threadFunc = []() {
+      int dPtr;
+      HIP_CHECK_THREAD(hipMalloc(&dPtr, 10));
+      // Some other work
+    };
+
+    // Launch threads
+    std::vector<std::thread> threadPool;
+    for(...) {
+        threadPool.emplace_back(std::thread(threadFunc));
+    }
+
+    // Join threads
+    for(auto &i : threadPool) {
+        i.join();
+    }
+
+    // Validate all results
+    HIP_CHECK_THREAD_FINALIZE();
+  ```
+
+### Multi Process Macros
+These macros are to be called in multi process tests, inside a process which gets spawned. The reasoning is the same, Catch2 does not support multi process checks.
+
+- ```HIPCHECK()``` : Same as ```HIP_CHECK``` but will not call Catch2's ```REQUIRE``` on the HIP API. It will print if there is a mismatch and exit the process.
+
+- ```HIPASSERT``` : Same as ```HIP_ASSERT``` but will not call Catch2's ```REQUIRE``` on the HIP API. It will print if there is a mismatch and exit the process.
 
 ## Enabling New Tests
 Initially, the new tests can be enabled via using ```-DHIP_CATCH_TEST=ON```. After porting existing tests, this will be turned on by default.
