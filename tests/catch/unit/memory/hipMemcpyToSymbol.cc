@@ -19,7 +19,7 @@ THE SOFTWARE.
 
 #include <hip_test_common.hh>
 
-__device__ int devSymbol;
+__device__ int devSymbol[10];
 
 /* Test verifies hipMemcpyToSymbol API Negative scenarios.
  */
@@ -55,5 +55,39 @@ TEST_CASE("Unit_hipMemcpyToSymbol_Negative") {
     HIP_CHECK_ERROR(
         hipMemcpyToSymbol(HIP_SYMBOL(devSymbol), &result, sizeof(int), 0, hipMemcpyDeviceToHost),
         hipErrorInvalidMemcpyDirection);
+  }
+}
+
+TEST_CASE("Unit_hipMemcpyToFromSymbol_SimpleUsecase") {
+  SECTION("Singular Value") {
+    int set = 42;
+    HIP_CHECK(hipMemcpyToSymbol(HIP_SYMBOL(devSymbol), &set, sizeof(int)));
+    int result{0};
+    HIP_CHECK(hipMemcpyFromSymbol(&result, HIP_SYMBOL(devSymbol), sizeof(int)));
+    REQUIRE(result == set);
+  }
+
+  SECTION("Array Values") {
+    constexpr size_t size = 10;
+    int set[size] = {4, 2, 4, 2, 4, 2, 4, 2, 4, 2};
+    HIP_CHECK(hipMemcpyToSymbol(HIP_SYMBOL(devSymbol), set, sizeof(int) * size));
+    int result[size] = {0};
+    HIP_CHECK(hipMemcpyFromSymbol(&result, HIP_SYMBOL(devSymbol), sizeof(int) * size));
+    for (size_t i = 0; i < size; i++) {
+      REQUIRE(result[i] == set[i]);
+    }
+  }
+
+  SECTION("Offset'ed Values") {
+    constexpr size_t size = 10;
+    constexpr size_t offset = 5 * sizeof(int);
+    int set[size] = {9, 9, 9, 9, 9, 2, 4, 2, 4, 2};
+    HIP_CHECK(hipMemcpyToSymbol(HIP_SYMBOL(devSymbol), set, offset));
+    HIP_CHECK(hipMemcpyToSymbol(HIP_SYMBOL(devSymbol), set + 5, 0, offset));
+    int result[size] = {0};
+    HIP_CHECK(hipMemcpyFromSymbol(result, HIP_SYMBOL(devSymbol), sizeof(int) * size));
+    for (size_t i = 0; i < size; i++) {
+      REQUIRE(result[i] == set[i]);
+    }
   }
 }
