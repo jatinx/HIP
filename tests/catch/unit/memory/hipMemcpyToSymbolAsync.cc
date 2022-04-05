@@ -19,7 +19,7 @@ THE SOFTWARE.
 
 #include <hip_test_common.hh>
 
-__device__ int devSymbol;
+__device__ int devSymbol[10];
 
 /* Test verifies hipMemcpyToSymbolAsync API Negative scenarios.
  */
