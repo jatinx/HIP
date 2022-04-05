@@ -18,30 +18,44 @@ THE SOFTWARE.
 */
 
 #include <hip_test_common.hh>
-#define SIZE 1024
+
+__device__ int devSymbol;
 
 /* Test verifies hipMemcpyToSymbolAsync API Negative scenarios.
  */
 
 TEST_CASE("Unit_hipMemcpyToSymbolAsync_Negative") {
-  void *Sd;
-  char S[SIZE]="This is not a device symbol";
-
-  HIP_CHECK(hipMalloc(&Sd, SIZE));
-
-  hipStream_t stream;
-  HIP_CHECK(hipStreamCreate(&stream));
-
-  SECTION("Passing void pointer") {
-    REQUIRE(hipSuccess != hipMemcpyToSymbolAsync(HIP_SYMBOL(Sd), S,
-                           SIZE, 0, hipMemcpyHostToDevice, stream));
+  SECTION("Invalid Src Ptr") {
+    int result{0};
+    HIP_CHECK_ERROR(
+        hipMemcpyToSymbolAsync(nullptr, &result, sizeof(int), 0, hipMemcpyHostToDevice, nullptr),
+        hipErrorInvalidSymbol);
   }
 
-  SECTION("Passing NULL pointer") {
-    REQUIRE(hipSuccess != hipMemcpyToSymbolAsync(nullptr, S,
-                           SIZE, 0, hipMemcpyHostToDevice, stream));
+  SECTION("Invalid Dst Ptr") {
+    HIP_CHECK_ERROR(hipMemcpyToSymbolAsync(HIP_SYMBOL(devSymbol), nullptr, sizeof(int), 0,
+                                           hipMemcpyHostToDevice, nullptr),
+                    hipErrorInvalidValue);
   }
 
-  HIP_CHECK(hipStreamDestroy(stream));
-  HIP_CHECK(hipFree(Sd));
+  SECTION("Invalid Size") {
+    int result{0};
+    HIP_CHECK_ERROR(hipMemcpyToSymbolAsync(HIP_SYMBOL(devSymbol), &result, sizeof(int) * 10, 0,
+                                           hipMemcpyHostToDevice, nullptr),
+                    hipErrorInvalidValue);
+  }
+
+  SECTION("Invalid Offset") {
+    int result{0};
+    HIP_CHECK_ERROR(hipMemcpyToSymbolAsync(HIP_SYMBOL(devSymbol), &result, sizeof(int), 3,
+                                           hipMemcpyHostToDevice, nullptr),
+                    hipErrorInvalidValue);
+  }
+
+  SECTION("Invalid Direction") {
+    int result{0};
+    HIP_CHECK_ERROR(hipMemcpyToSymbolAsync(HIP_SYMBOL(devSymbol), &result, sizeof(int), 0,
+                                           hipMemcpyDeviceToHost, nullptr),
+                    hipErrorInvalidMemcpyDirection);
+  }
 }

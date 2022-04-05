@@ -18,26 +18,42 @@ THE SOFTWARE.
 */
 
 #include <hip_test_common.hh>
-#define SIZE 1024
+
+__device__ int devSymbol;
 
 /* Test verifies hipMemcpyToSymbol API Negative scenarios.
  */
-
 TEST_CASE("Unit_hipMemcpyToSymbol_Negative") {
-  void *Sd;
-  char S[SIZE]="This is not a device symbol";
-
-  HIP_CHECK(hipMalloc(&Sd, SIZE));
-
-  SECTION("Passing void pointer") {
-    REQUIRE(hipSuccess != hipMemcpyToSymbol(HIP_SYMBOL(Sd), S,
-                              SIZE, 0, hipMemcpyDeviceToHost));
+  SECTION("Invalid Src Ptr") {
+    int result{0};
+    HIP_CHECK_ERROR(hipMemcpyToSymbol(nullptr, &result, sizeof(int), 0, hipMemcpyHostToDevice),
+                    hipErrorInvalidSymbol);
   }
 
-  SECTION("Passing NULL Pointer") {
-    REQUIRE(hipSuccess != hipMemcpyToSymbol(nullptr, S,
-                              SIZE, 0, hipMemcpyDeviceToHost));
+  SECTION("Invalid Dst Ptr") {
+    HIP_CHECK_ERROR(
+        hipMemcpyToSymbol(HIP_SYMBOL(devSymbol), nullptr, sizeof(int), 0, hipMemcpyHostToDevice),
+        hipErrorInvalidValue);
   }
 
-  HIP_CHECK(hipFree(Sd));
+  SECTION("Invalid Size") {
+    int result{0};
+    HIP_CHECK_ERROR(hipMemcpyToSymbol(HIP_SYMBOL(devSymbol), &result, sizeof(int) * 10, 0,
+                                      hipMemcpyHostToDevice),
+                    hipErrorInvalidValue);
+  }
+
+  SECTION("Invalid Offset") {
+    int result{0};
+    HIP_CHECK_ERROR(
+        hipMemcpyToSymbol(HIP_SYMBOL(devSymbol), &result, sizeof(int), 3, hipMemcpyHostToDevice),
+        hipErrorInvalidValue);
+  }
+
+  SECTION("Invalid Direction") {
+    int result{0};
+    HIP_CHECK_ERROR(
+        hipMemcpyToSymbol(HIP_SYMBOL(devSymbol), &result, sizeof(int), 0, hipMemcpyDeviceToHost),
+        hipErrorInvalidMemcpyDirection);
+  }
 }

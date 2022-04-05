@@ -18,30 +18,44 @@ THE SOFTWARE.
 */
 
 #include <hip_test_common.hh>
-#define SIZE 1024
+
+__device__ int devSymbol;
 
 /* Test verifies hipMemcpyFromSymbolAsync API Negative scenarios.
  */
 
 TEST_CASE("Unit_hipMemcpyFromSymbolAsync_Negative") {
-  void *Sd;
-  char S[SIZE]="This is not a device symbol";
-
-  HIP_CHECK(hipMalloc(&Sd, SIZE));
-
-  hipStream_t stream;
-  HIP_CHECK(hipStreamCreate(&stream));
-
-  SECTION("Passing void pointer") {
-    REQUIRE(hipSuccess != hipMemcpyFromSymbolAsync(S, HIP_SYMBOL(Sd),
-                          SIZE, 0, hipMemcpyDeviceToHost, stream));
+  SECTION("Invalid Src Ptr") {
+    HIP_CHECK_ERROR(hipMemcpyFromSymbolAsync(nullptr, HIP_SYMBOL(devSymbol), sizeof(int), 0,
+                                             hipMemcpyDeviceToHost, nullptr),
+                    hipErrorInvalidValue);
   }
 
-  SECTION("Passing NULL pointer") {
-    REQUIRE(hipSuccess != hipMemcpyFromSymbolAsync(S, nullptr,
-                          SIZE, 0, hipMemcpyDeviceToHost, stream));
+  SECTION("Invalid Dst Ptr") {
+    int result{0};
+    HIP_CHECK_ERROR(
+        hipMemcpyFromSymbolAsync(&result, nullptr, sizeof(int), 0, hipMemcpyDeviceToHost, nullptr),
+        hipErrorInvalidSymbol);
   }
 
-  HIP_CHECK(hipStreamDestroy(stream));
-  HIP_CHECK(hipFree(Sd));
+  SECTION("Invalid Size") {
+    int result{0};
+    HIP_CHECK_ERROR(hipMemcpyFromSymbolAsync(&result, HIP_SYMBOL(devSymbol), sizeof(int) * 10, 0,
+                                             hipMemcpyDeviceToHost, nullptr),
+                    hipErrorInvalidValue);
+  }
+
+  SECTION("Invalid Offset") {
+    int result{0};
+    HIP_CHECK_ERROR(hipMemcpyFromSymbolAsync(&result, HIP_SYMBOL(devSymbol), sizeof(int), 3,
+                                             hipMemcpyDeviceToHost, nullptr),
+                    hipErrorInvalidValue);
+  }
+
+  SECTION("Invalid Direction") {
+    int result{0};
+    HIP_CHECK_ERROR(hipMemcpyFromSymbolAsync(&result, HIP_SYMBOL(devSymbol), sizeof(int), 0,
+                                             hipMemcpyHostToDevice, nullptr),
+                    hipErrorInvalidMemcpyDirection);
+  }
 }
