@@ -83,7 +83,7 @@ TEST_CASE("Unit_hipMemcpyToFromSymbol_SimpleUsecase") {
     constexpr size_t offset = 5 * sizeof(int);
     int set[size] = {9, 9, 9, 9, 9, 2, 4, 2, 4, 2};
     HIP_CHECK(hipMemcpyToSymbol(HIP_SYMBOL(devSymbol), set, offset));
-    HIP_CHECK(hipMemcpyToSymbol(HIP_SYMBOL(devSymbol), set + 5, 0, offset));
+    HIP_CHECK(hipMemcpyToSymbol(HIP_SYMBOL(devSymbol), set + 5, offset, offset));
     int result[size] = {0};
     HIP_CHECK(hipMemcpyFromSymbol(result, HIP_SYMBOL(devSymbol), sizeof(int) * size));
     for (size_t i = 0; i < size; i++) {
