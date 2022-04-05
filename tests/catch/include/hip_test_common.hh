@@ -23,6 +23,7 @@ THE SOFTWARE.
 #pragma once
 #include "hip_test_context.hh"
 #include <catch.hpp>
+#include <atomic>
 #include <chrono>
 #include <stdlib.h>
 #include <iostream>
