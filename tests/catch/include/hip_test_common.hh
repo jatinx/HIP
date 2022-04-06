@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2021 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -54,7 +54,7 @@ THE SOFTWARE.
     REQUIRE(localError == expectedError);                                                          \
   }
 
-namespace internal {
+inline namespace internal {
 struct HCResult {
   size_t line;
   std::string file;
@@ -64,21 +64,24 @@ struct HCResult {
       : line(l), file(f), result(r), call(c) {}
 };
 
-static std::vector<HCResult> hcResults;
+static std::vector<HCResult> hcResults;  // Store results to validate at the end of threads so that
+                                         // we can have proper test result count
 static std::mutex resultMutex;
-static std::atomic<bool> hasErrorOccured;
+static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of threads if error has
+                                                  // occurred in one of the threads
 }  // namespace internal
 
 // Threaded HIP_CHECKs
 #define HIP_CHECK_THREAD(error)                                                                    \
   {                                                                                                \
-    /*To see if error has occured in previous threads*/                                            \
-    if (internal::hasErrorOccured.load() == true) {                                                \
+    /*To see if error has occured in previous threads, stop execution to save time waiting for     \
+     * error*/                                                                                     \
+    if (hasErrorOccured.load() == true) {                                                          \
       return; /*This will only work with std::thread and not with std::async*/                     \
     }                                                                                              \
     auto localError = error;                                                                       \
     if ((localError != hipSuccess) && (localError != hipErrorPeerAccessAlreadyEnabled)) {          \
-      internal::hasErrorOccured.store(true);                                                       \
+      hasErrorOccured.store(true);                                                                 \
     }                                                                                              \
     internal::HCResult result(__LINE__, __FILE__, localError, #error);                             \
     { /* Scoped lock */                                                                            \
@@ -91,16 +94,17 @@ static std::atomic<bool> hasErrorOccured;
 // Do not call before all threads have joined
 #define HIP_CHECK_THREAD_FINALIZE()                                                                \
   {                                                                                                \
-    if (internal::hasErrorOccured.load() == true) {                                                \
+    if (hasErrorOccured.load() == true) {                                                          \
       UNSCOPED_INFO("Error has Occured");                                                          \
+      hasErrorOccured.store(false);                                                                \
     }                                                                                              \
-    for (const auto& i : internal::hcResults) {                                                    \
+    for (const auto& i : hcResults) {                                                              \
       INFO("HIP API Result check\n    File:: "                                                     \
            << i.file << "\n    Line:: " << i.line << "\n    API:: " << i.call << "\n    Result:: " \
            << i.result << "\n    Result Str:: " << hipGetErrorString(i.result));                   \
       REQUIRE(((i.result == hipSuccess) || (i.result == hipErrorPeerAccessAlreadyEnabled)));       \
     }                                                                                              \
-    internal::hcResults.clear();                                                                   \
+    hcResults.clear();                                                                             \
   }
 
 #define HIPRTC_CHECK(error)                                                                        \

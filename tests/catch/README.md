@@ -83,7 +83,7 @@ These macros are to be used when your test is calling HIP APIs via the main thre
 ### Multi Thread Macros
 These macros are to be used when you call HIP APIs in a multi threaded way. They exist because Catch2 ```REQUIRE``` and ```CHECK``` macros can not handle multi threaded calls. To solve this problem, following macros log all results for HIP APIs called via ```HIP_CHECK_THREAD``` and validate them after the threads end via ```HIP_CHECK_THREAD_FINALIZE```.
 
-Note: These should used in ```std::thread``` only.
+Note: These should used in ```std::thread``` only. For multi proc guidelines look at [MultiProc Macros](#multi-process-macros) and [SpawnProc Class](#multiproc-management-class)
 
 - ```HIP_CHECK_THREAD``` : This macro takes in a HIP API and tests for its result to be either ```hipSuccess``` or ```hipErrorPeerAccessAlreadyEnabled```. It can also tell other threads if an error has occured in one of the HIP API and can prematurely stop the threads.
 
@@ -125,7 +125,7 @@ Initially, the new tests can be enabled via using ```-DHIP_CATCH_TEST=ON```. Aft
 
 ## Building a single test
 ```bash
-hipcc <path_to_test.cpp> -I<HIP_SRC_DIR>/tests/newTests/include <HIP_SRC_DIR>/tests/newTests/hipTestMain/standalone_main.cc -I<HIP_SRC_DIR>/tests/newTests/external/Catch2 -g -o <out_file_name>
+hipcc <path_to_test.cpp> -I<HIP_SRC_DIR>/tests/catch/include <HIP_SRC_DIR>/tests/catch/hipTestMain/standalone_main.cc -I<HIP_SRC_DIR>/tests/catch/external/Catch2 -g -o <out_file_name>
 ```
 
 ## Debugging support
@@ -147,6 +147,8 @@ Tests fall in 5 categories and its file name prefix are as follows:
  - Multi Process tests (Prefix: MultiProc_\*API\*_\*Optional Scenario\*, example: MultiProc_hipIPCMemHandle_GetDataFromProc): These tests are multi process tests and will only run on linux. They are used to test HIP APIs in multi process environment
  - Performance tests(Prefix: Perf_\*Intent\*_\*Optional Scenario\*, example: Perf_DispatchLatenc  y): Performance tests are used to get results of HIP APIs.
 
+
+# MultiProc Management Class
 There is a special interface available for process isolation. ```hip::SpawnProc``` in ```hip_test_process.hh```. Using this interface test can spawn of process and place passing conditions on its return value or its output to stdout. This can be useful for testing printf tests.
 Sample Usage:
 ```cpp
