@@ -64,9 +64,9 @@ struct HCResult {
       : line(l), file(f), result(r), call(c) {}
 };
 
-extern std::vector<HCResult> hcResults;
-extern std::mutex resultMutex;
-extern std::atomic<bool> hasErrorOccured;
+static std::vector<HCResult> hcResults;
+static std::mutex resultMutex;
+static std::atomic<bool> hasErrorOccured;
 }  // namespace internal
 
 // Threaded HIP_CHECKs
