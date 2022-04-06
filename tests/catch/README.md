@@ -34,6 +34,22 @@ Some useful functions are:
 
 This information can be accessed in any test via using: `TestContext::get().isAmd()`.
 
+## Adding test for a specific platform
+There might be some functionality which is not present on some platforms. Those tests can be hidden inside following macros.
+
+- ```HT_AMD``` is 1 when tests are running on AMD platform and 0 on NVIDIA.
+- ```HT_NVIDIA``` is 1 when tests are running on NVIDIA platform and 0 on AMD
+
+Usage:
+
+```cpp
+#if HT_AMD
+TEST_CASE("hipExtAPIs") {
+  // ...
+}
+#endif
+```
+
 ## Config file schema
 Some tests can be skipped using a config file placed in hipTestMain/config folder. Multiple config files can be defined for different configurations.
 The naming convention for the file needs to be "config_platform_os_archname.json"
@@ -113,15 +129,42 @@ Note: These should used in ```std::thread``` only. For multi proc guidelines loo
     HIP_CHECK_THREAD_FINALIZE();
   ```
 
+### Skipping Tests if certain criteria is not met
+If there arises a condition where certain flag is disabled and due to which a test can not run at that time, the following macro can be of use. It will highlight the test in ctest report as well.
+
+- ```HIP_SKIP_TEST``` : The api takes in an input of the reason as well and prints out the line HIP_SKIP_THIS_TEST. This causes ctest to mark the test as skipped and the test shows up in the report as skipped prompting proper response from the team.
+
+  Usage:
+
+  ```cpp
+  TEST_CASE("TestOnlyOnXnack") {
+    if(!XNACKEnabled) {
+      HIP_SKIP_TEST("Test only runs on system with XNACK enabled");
+      return;
+    }
+    // Rest of test functionality
+  }
+  ```
+
 ### Multi Process Macros
 These macros are to be called in multi process tests, inside a process which gets spawned. The reasoning is the same, Catch2 does not support multi process checks.
 
-- ```HIPCHECK()``` : Same as ```HIP_CHECK``` but will not call Catch2's ```REQUIRE``` on the HIP API. It will print if there is a mismatch and exit the process.
+- ```HIPCHECK``` : Same as ```HIP_CHECK``` but will not call Catch2's ```REQUIRE``` on the HIP API. It will print if there is a mismatch and exit the process.
 
 - ```HIPASSERT``` : Same as ```HIP_ASSERT``` but will not call Catch2's ```REQUIRE``` on the HIP API. It will print if there is a mismatch and exit the process.
 
+## MultiProc Management Class
+There is a special interface available for process isolation. ```hip::SpawnProc``` in ```hip_test_process.hh```. Using this interface test can spawn of process and place passing conditions on its return value or its output to stdout. This can be useful for testing printf tests.
+Sample Usage:
+```cpp
+hip::SpawnProc proc(<relative path of exe with test folder>, <optional bool value, if output is to be recorded>);
+REQUIRE(0 == proc.run()); // Test of return value of the proc
+REQUIRE(exepctedOutput == proc.getOutput()); // Test on expected output of the process
+```
+The process can be a standalone exe (see tests/catch/unit/printfExe for more information).
+
 ## Enabling New Tests
-Initially, the new tests can be enabled via using ```-DHIP_CATCH_TEST=ON```. After porting existing tests, this will be turned on by default.
+Initially, the new tests can be enabled via using ```-DHIP_CATCH_TEST=1```. After porting existing tests, this will be turned on by default.
 
 ## Building a single test
 ```bash
@@ -147,18 +190,7 @@ Tests fall in 5 categories and its file name prefix are as follows:
  - Multi Process tests (Prefix: MultiProc_\*API\*_\*Optional Scenario\*, example: MultiProc_hipIPCMemHandle_GetDataFromProc): These tests are multi process tests and will only run on linux. They are used to test HIP APIs in multi process environment
  - Performance tests(Prefix: Perf_\*Intent\*_\*Optional Scenario\*, example: Perf_DispatchLatenc  y): Performance tests are used to get results of HIP APIs.
 
-
-# MultiProc Management Class
-There is a special interface available for process isolation. ```hip::SpawnProc``` in ```hip_test_process.hh```. Using this interface test can spawn of process and place passing conditions on its return value or its output to stdout. This can be useful for testing printf tests.
-Sample Usage:
-```cpp
-hip::SpawnProc proc(<relative path of exe with test folder>, <optional bool value, if output is to be recorded>);
-REQUIRE(0 == proc.run()); // Test of return value of the proc
-REQUIRE(exepctedOutput == proc.getOutput()); // Test on expected output of the process
-```
-The process can be a standalone exe (see tests/catch/unit/printfExe for more information).
-
-General Guidelines:
+# General Guidelines:
  - Do not use the catch2 tags. Tags wont be used for filtering
  - Add as many INFO() as you can in tests which prints state of the t est, this will help the debugger when the test fails (INFO macro only prints when the test fails)
  - Check return of each HIP API and fail whenever there is a misma    tch with hipSuccess or hiprtcSuccess.
