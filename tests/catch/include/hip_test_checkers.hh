@@ -286,7 +286,7 @@ void initArraysT(T** A_d, T** B_d, T** C_d, T** A_h, T** B_h, T** C_h, size_t N,
 
 // Threaded version of freeArraysForHost to be called from multi thread tests
 // Call HIP_CHECK_THREAD_FINALIZE after joining
-template <typename T> bool freeArraysForHostT(T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
+template <typename T> void freeArraysForHostT(T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
   if (usePinnedHost) {
     if (A_h) {
       HIP_CHECK_THREAD(hipHostFree(A_h));
@@ -310,7 +310,7 @@ template <typename T> bool freeArraysForHostT(T* A_h, T* B_h, T* C_h, bool usePi
   }
 }
 
-template <typename T> bool freeArraysForHost(T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
+template <typename T> void freeArraysForHost(T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
   if (usePinnedHost) {
     if (A_h) {
       HIP_CHECK(hipHostFree(A_h));
@@ -346,7 +346,7 @@ bool freeArraysT(T* A_d, T* B_d, T* C_d, T* A_h, T* B_h, T* C_h, bool usePinnedH
     HIP_CHECK_THREAD(hipFree(C_d));
   }
 
-  return freeArraysForHostT(A_h, B_h, C_h, usePinnedHost);
+  freeArraysForHostT(A_h, B_h, C_h, usePinnedHost);
 }
 
 template <typename T>
@@ -361,7 +361,7 @@ bool freeArrays(T* A_d, T* B_d, T* C_d, T* A_h, T* B_h, T* C_h, bool usePinnedHo
     HIP_CHECK(hipFree(C_d));
   }
 
-  return freeArraysForHost(A_h, B_h, C_h, usePinnedHost);
+  freeArraysForHost(A_h, B_h, C_h, usePinnedHost);
 }
 
 }  // namespace HipTest
