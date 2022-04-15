@@ -231,7 +231,7 @@ template <typename T> void setDefaultDataT(size_t numElements, T* A_h, T* B_h, T
 // Threaded version of initArraysForHost to be called from multi thread tests
 // Call HIP_CHECK_THREAD_FINALIZE after joining
 template <typename T>
-bool initArraysForHostT(T** A_h, T** B_h, T** C_h, size_t N, bool usePinnedHost = false) {
+void initArraysForHostT(T** A_h, T** B_h, T** C_h, size_t N, bool usePinnedHost = false) {
   size_t Nbytes = N * sizeof(T);
 
   if (usePinnedHost) {
@@ -281,7 +281,7 @@ void initArraysT(T** A_d, T** B_d, T** C_d, T** A_h, T** B_h, T** C_h, size_t N,
     HIP_CHECK_THREAD(hipMalloc(C_d, Nbytes));
   }
 
-  return initArraysForHostT(A_h, B_h, C_h, N, usePinnedHost);
+  initArraysForHostT(A_h, B_h, C_h, N, usePinnedHost);
 }
 
 // Threaded version of freeArraysForHost to be called from multi thread tests
