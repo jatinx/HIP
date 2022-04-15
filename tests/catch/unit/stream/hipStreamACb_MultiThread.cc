@@ -89,11 +89,11 @@ static void HIPRT_CB Thread2_Callback(hipStream_t stream, hipError_t status,
 }
 
 void Thread1_func() {
-  HIPCHECK(hipStreamAddCallback(mystream, Thread1_Callback, nullptr, 0));
+  HIP_CHECK_THREAD(hipStreamAddCallback(mystream, Thread1_Callback, nullptr, 0));
 }
 
 void Thread2_func() {
-  HIPCHECK(hipStreamAddCallback(mystream, Thread2_Callback, nullptr, 0));
+  HIP_CHECK_THREAD(hipStreamAddCallback(mystream, Thread2_Callback, nullptr, 0));
 }
 
 /**
@@ -150,6 +150,8 @@ TEST_CASE("Unit_hipStreamAddCallback_MultipleThreads") {
   for (int i = 0; i < numThreads; i++) {
     T[i].join();
   }
+
+  HIP_CHECK_THREAD_FINALIZE();
 
   HIP_CHECK(hipStreamSynchronize(mystream));
   HIP_CHECK(hipStreamDestroy(mystream));

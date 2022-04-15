@@ -36,13 +36,12 @@
 #define NUM_W 256
 
 
-
-void queueJobsForhipMemset2DAsync(char* A_d, char* A_h, size_t pitch,
-                                  size_t width, hipStream_t stream) {
+void queueJobsForhipMemset2DAsync(char* A_d, char* A_h, size_t pitch, size_t width,
+                                  hipStream_t stream) {
   constexpr int memsetval = 0x22;
-  HIPCHECK(hipMemset2DAsync(A_d, pitch, memsetval, NUM_W, NUM_H, stream));
-  HIPCHECK(hipMemcpy2DAsync(A_h, width, A_d, pitch, NUM_W, NUM_H,
-                            hipMemcpyDeviceToHost, stream));
+  HIP_CHECK_THREAD(hipMemset2DAsync(A_d, pitch, memsetval, NUM_W, NUM_H, stream));
+  HIP_CHECK_THREAD(
+      hipMemcpy2DAsync(A_h, width, A_d, pitch, NUM_W, NUM_H, hipMemcpyDeviceToHost, stream));
 }
 
 
@@ -181,6 +180,8 @@ TEST_CASE("Unit_hipMemset2DAsync_MultiThread") {
     for (size_t j = 0 ; j < thread_count; j++) {
       t[j].join();
     }
+
+    HIP_CHECK_THREAD_FINALIZE();
 
     HIP_CHECK(hipStreamSynchronize(stream));
     for (size_t k = 0 ; k < elements ; k++) {

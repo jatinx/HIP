@@ -36,8 +36,8 @@ THE SOFTWARE.
   {                                                                                                \
     hipError_t localError = error;                                                                 \
     INFO("Matching Error to hipSuccess or hipErrorPeerAccessAlreadyEnabled: "                      \
-         << hipGetErrorString(localError) << " Code: " << localError << " Str: " << #error         \
-         << " In File: " << __FILE__ << " At line: " << __LINE__);                                 \
+         << hipGetErrorString(localError) << "\n    Code: " << localError << "\n    Str: "         \
+         << #error << "\n    In File: " << __FILE__ << "\n    At line: " << __LINE__);             \
     REQUIRE(((localError == hipSuccess) || (localError == hipErrorPeerAccessAlreadyEnabled)));     \
   }
 
@@ -45,12 +45,12 @@ THE SOFTWARE.
 #define HIP_CHECK_ERROR(errorExpr, expectedError)                                                  \
   {                                                                                                \
     hipError_t localError = errorExpr;                                                             \
-    INFO("Matching Errors: "                                                                       \
-         << " Expected Error: " << hipGetErrorString(expectedError)                                \
-         << " Expected Code: " << expectedError << '\n'                                            \
-         << "                  Actual Error:   " << hipGetErrorString(localError)                  \
-         << " Actual Code:   " << localError << "\nStr: " << #errorExpr                            \
-         << "\nIn File: " << __FILE__ << " At line: " << __LINE__);                                \
+    INFO("Matching Errors:"                                                                        \
+         << "\n    Expected Error: " << hipGetErrorString(expectedError)                           \
+         << "\n    Expected Code: " << expectedError                                               \
+         << "\n    Actual Error:   " << hipGetErrorString(localError)                              \
+         << "\n    Actual Code:   " << localError << "\n    Str: " << #errorExpr                   \
+         << "\n    In File: " << __FILE__ << "\n    At line: " << __LINE__);                       \
     REQUIRE(localError == expectedError);                                                          \
   }
 
@@ -60,8 +60,9 @@ struct HCResult {
   std::string file;
   hipError_t result;
   std::string call;
-  HCResult(size_t l, std::string f, hipError_t r, std::string c)
-      : line(l), file(f), result(r), call(c) {}
+  bool condition;
+  HCResult(size_t l, std::string f, hipError_t r, std::string c, bool cres = true)
+      : line(l), file(f), result(r), call(c), condition(res) {}
 };
 
 static std::vector<HCResult> hcResults;  // Store results to validate at the end of threads so that
@@ -90,6 +91,19 @@ static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of t
     }                                                                                              \
   }
 
+#define REQUIRE_THREAD(condition)                                                                  \
+  {                                                                                                \
+    /*To see if error has occured in previous threads, stop execution to save time waiting for     \
+     * error*/                                                                                     \
+    if (hasErrorOccured.load() == true) {                                                          \
+      return; /*This will only work with std::thread and not with std::async*/                     \
+    }                                                                                              \
+    auto localResult = (condition);                                                                \
+    if (!localResult) {                                                                            \
+      hasErrorOccured.store(true);                                                                 \
+    }                                                                                              \
+    HCResult result(__LINE__, __FILE__, hipSuccess, #condition, localResult);                      \
+  }
 
 // Do not call before all threads have joined
 #define HIP_CHECK_THREAD_FINALIZE()                                                                \
@@ -103,6 +117,7 @@ static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of t
            << i.file << "\n    Line:: " << i.line << "\n    API:: " << i.call << "\n    Result:: " \
            << i.result << "\n    Result Str:: " << hipGetErrorString(i.result));                   \
       REQUIRE(((i.result == hipSuccess) || (i.result == hipErrorPeerAccessAlreadyEnabled)));       \
+      REQUIRE(i.condition);                                                                        \
     }                                                                                              \
     hcResults.clear();                                                                             \
   }
@@ -111,8 +126,8 @@ static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of t
   {                                                                                                \
     auto localError = error;                                                                       \
     INFO("Matching Error to HIPRTC_SUCCESS: "                                                      \
-         << hiprtcGetErrorString(localError) << " Code: " << localError << " Str: " << #error      \
-         << " In File: " << __FILE__ << " At line: " << __LINE__);                                 \
+         << hiprtcGetErrorString(localError) << "\n    Code: " << localError << "\n    Str: "      \
+         << #error << "\n    In File: " << __FILE__ << "\n    At line: " << __LINE__);             \
     REQUIRE(error == HIPRTC_SUCCESS);                                                              \
   }
 
