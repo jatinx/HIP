@@ -53,17 +53,16 @@ enum class ops
 };
 
 namespace MemcpyStream {
-unsigned setNumBlocks(int blocksPerCU, int threadsPerBlock, size_t N) {
+void setNumBlocks(int blocksPerCU, int threadsPerBlock, size_t N, unsigned& blocks) {
   int device{0};
   HIP_CHECK_THREAD(hipGetDevice(&device));
   hipDeviceProp_t props{};
   HIP_CHECK_THREAD(hipGetDeviceProperties(&props, device));
 
-  unsigned blocks = props.multiProcessorCount * blocksPerCU;
+  blocks = props.multiProcessorCount * blocksPerCU;
   if (blocks * threadsPerBlock > N) {
     blocks = (N + threadsPerBlock - 1) / threadsPerBlock;
   }
-  return blocks;
 }
 }  // namespace MemcpyStream
 
@@ -150,7 +149,8 @@ void HipMemcpyWithStreamMultiThreadtests::TestwithOnestream(bool& val_res) {
   int *A_h, *B_h, *C_h;
   size_t Nbytes{N * sizeof(int)};
   AllocateMemory(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h);
-  unsigned blocks = MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N);
+  unsigned blocks = 0;
+  MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
   hipStream_t stream;
   HIP_CHECK_THREAD(hipStreamCreate(&stream));
 
@@ -171,7 +171,8 @@ void HipMemcpyWithStreamMultiThreadtests::TestwithTwoStream(bool& val_res) {
   int *A_d[NoofStreams], *B_d[NoofStreams], *C_d[NoofStreams];
   int *A_h[NoofStreams], *B_h[NoofStreams], *C_h[NoofStreams];
 
-  unsigned blocks = MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N);
+  unsigned blocks = 0;
+  MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
 
   for (int i = 0; i < NoofStreams; ++i) {
     AllocateMemory(&A_d[i], &B_d[i], &C_d[i], &A_h[i], &B_h[i], &C_h[i]);
@@ -210,7 +211,8 @@ void HipMemcpyWithStreamMultiThreadtests::TestDtoDonSameDevice(bool& val_res) {
   int *A_d[NoofStreams], *B_d[NoofStreams], *C_d[NoofStreams];
   int *A_h[NoofStreams], *B_h[NoofStreams], *C_h[NoofStreams];
 
-  unsigned blocks = MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N);
+  unsigned blocks = 0;
+  MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
 
   AllocateMemory(&A_d[0], &B_d[0], &C_d[0], &A_h[0], &B_h[0], &C_h[0]);
 
@@ -225,7 +227,7 @@ void HipMemcpyWithStreamMultiThreadtests::TestDtoDonSameDevice(bool& val_res) {
   HIP_CHECK_THREAD(hipMalloc(&B_d[1], Nbytes));
   HIP_CHECK_THREAD(hipMalloc(&C_d[1], Nbytes));
   C_h[1] = reinterpret_cast<int*>(malloc(Nbytes));
-  HIP_CHECK_THREAD(C_h[1] != NULL);
+  REQUIRE_THREAD(C_h[1] != NULL);
 
   HIP_CHECK_THREAD(hipMemcpyWithStream(A_d[0], A_h[0], Nbytes, hipMemcpyHostToDevice, stream[0]));
   HIP_CHECK_THREAD(hipMemcpyWithStream(B_d[0], B_h[0], Nbytes, hipMemcpyHostToDevice, stream[0]));
@@ -272,7 +274,8 @@ void HipMemcpyWithStreamMultiThreadtests::TestOnMultiGPUwithOneStream(bool& val_
   size_t Nbytes = N * sizeof(int);
   int numDevices = 0;
 
-  unsigned blocks = MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N);
+  unsigned blocks = 0;
+  MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
   HIP_CHECK_THREAD(hipGetDeviceCount(&numDevices));
   // If you have single GPU machine the return
   if (numDevices <= 1) {
@@ -323,7 +326,8 @@ void HipMemcpyWithStreamMultiThreadtests::TestkindDtoH(bool& val_res) {
   int *A_d, *B_d, *C_d;
   int *A_h, *B_h, *C_h;
 
-  unsigned blocks = MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N);
+  unsigned blocks = 0;
+  MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
   AllocateMemory(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h);
 
   hipStream_t stream{};
@@ -347,7 +351,8 @@ void HipMemcpyWithStreamMultiThreadtests::TestkindDtoD(bool& val_res) {
   int numDevices = 0;
 
 
-  unsigned blocks = MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N);
+  unsigned blocks = 0;
+  MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
   HIP_CHECK_THREAD(hipGetDeviceCount(&numDevices));
   // If you have single GPU machine the return
   if (numDevices <= 1) {
@@ -373,7 +378,7 @@ void HipMemcpyWithStreamMultiThreadtests::TestkindDtoD(bool& val_res) {
     HIP_CHECK_THREAD(hipMalloc(&B_d[i], Nbytes));
     HIP_CHECK_THREAD(hipMalloc(&C_d[i], Nbytes));
     C_h[i] = reinterpret_cast<int*>(malloc(Nbytes));
-    HIP_CHECK_THREAD(C_h[i] != NULL);
+    REQUIRE_THREAD(C_h[i] != NULL);
   }
 
 
@@ -433,7 +438,8 @@ void HipMemcpyWithStreamMultiThreadtests::TestkindDefault(bool& val_res) {
   int *A_h, *B_h, *C_h;
 
 
-  unsigned blocks = MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N);
+  unsigned blocks = 0;
+  MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
   AllocateMemory(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h);
 
   hipStream_t stream{};
@@ -456,7 +462,8 @@ void HipMemcpyWithStreamMultiThreadtests::TestkindDefaultForDtoD(bool& val_res) 
   int numDevices = 0;
 
 
-  unsigned blocks = MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N);
+  unsigned blocks = 0;
+  MemcpyStream::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
   HIP_CHECK_THREAD(hipGetDeviceCount(&numDevices));
   // Test case will not run on single GPU setup.
   if (numDevices <= 1) {
