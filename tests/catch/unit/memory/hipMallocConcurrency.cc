@@ -182,11 +182,10 @@ static bool regressAllocInLoop(int gpu) {
  * Validates data consistency on supplied gpu
  * In Multithreaded Environment
  */
-static bool validateMemoryOnGpuMThread(int gpu, bool concurOnOneGPU = false) {
+static void validateMemoryOnGpuMThread(int gpu, bool& TestPassed, bool concurOnOneGPU = false) {
   int *A_d, *B_d, *C_d;
   int *A_h, *B_h, *C_h;
   size_t prevAvl, prevTot, curAvl, curTot;
-  bool TestPassed = true;
   constexpr auto N = 4 * 1024 * 1024;
   constexpr auto blocksPerCU = 6;  // to hide latency
   constexpr auto threadsPerBlock = 256;
@@ -205,9 +204,10 @@ static bool validateMemoryOnGpuMThread(int gpu, bool concurOnOneGPU = false) {
 
   HIP_CHECK_THREAD(hipMemcpy(C_h, C_d, Nbytes, hipMemcpyDeviceToHost));
 
-  if (!HipTest::checkVectorADD(A_h, B_h, C_h, N)) {
+  if (!HipTest::checkVectorADD(A_h, B_h, C_h, N)) {  // FIXME, the func uses catch2 macro
   } else {
     TestPassed = false;
+    return;
   }
 
   HipTest::freeArrays(A_d, B_d, C_d, A_h, B_h, C_h, false);
@@ -216,16 +216,13 @@ static bool validateMemoryOnGpuMThread(int gpu, bool concurOnOneGPU = false) {
   if (!concurOnOneGPU && (prevAvl != curAvl || prevTot != curTot)) {
     TestPassed = false;
   }
-
-  return TestPassed;
 }
 
 /**
  * Regress memory allocation and free in loop
  * In Multithreaded Environment
  */
-static bool regressAllocInLoopMthread(int gpu) {
-  bool TestPassed = true;
+static void regressAllocInLoopMthread(int gpu, bool& TestPassed) {
   size_t tot, avail, ptot, pavail, numBytes;
   int i = 0;
   int* ptr;
@@ -242,7 +239,7 @@ static bool regressAllocInLoopMthread(int gpu) {
 
     if (pavail - avail < numBytes) {  // We expect pavail-avail >= numBytes
       TestPassed = false;
-      break;
+      return;
     }
   }
 
@@ -259,17 +256,19 @@ static bool regressAllocInLoopMthread(int gpu) {
   HIP_CHECK_THREAD(hipMemGetInfo(&avail, &tot));
 
   if ((pavail != avail) || (ptot != tot)) {
-    TestPassed &= false;
+    TestPassed = false;
+    return;
   }
-
-  return TestPassed;
 }
 
 /*
  * Thread func to regress alloc and check data consistency
  */
 static void threadFunc(int gpu) {
-  g_thTestPassed = regressAllocInLoopMthread(gpu) && validateMemoryOnGpuMThread(gpu);
+  bool res1 = true, res2 = true;
+  regressAllocInLoopMthread(gpu, res1);
+  validateMemoryOnGpuMThread(gpu, res2);
+  g_thTestPassed = res1 && res2;
 }
 
 
