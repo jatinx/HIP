@@ -94,7 +94,7 @@ __global__ void waiting_kernel(int* semaphore) {
 
 std::thread startSignalingThread(int* semaphore) {
   std::thread signalingThread([semaphore]() {
-    hipStream_t signalingStream;
+    hipStream_t signalingStream{};
     HIP_CHECK_THREAD(hipStreamCreateWithFlags(&signalingStream, hipStreamNonBlocking));
 
     signaling_kernel<<<1, 1, 0, signalingStream>>>(semaphore);

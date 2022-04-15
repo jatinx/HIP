@@ -84,10 +84,10 @@ static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of t
     if ((localError != hipSuccess) && (localError != hipErrorPeerAccessAlreadyEnabled)) {          \
       hasErrorOccured.store(true);                                                                 \
     }                                                                                              \
-    internal::HCResult result(__LINE__, __FILE__, localError, #error);                             \
+    HCResult result(__LINE__, __FILE__, localError, #error);                                       \
     { /* Scoped lock */                                                                            \
-      std::unique_lock<std::mutex> lock(internal::resultMutex);                                    \
-      internal::hcResults.push_back(result);                                                       \
+      std::unique_lock<std::mutex> lock(resultMutex);                                              \
+      hcResults.push_back(result);                                                                 \
     }                                                                                              \
   }
 
@@ -103,6 +103,10 @@ static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of t
       hasErrorOccured.store(true);                                                                 \
     }                                                                                              \
     HCResult result(__LINE__, __FILE__, hipSuccess, #condition, localResult);                      \
+    { /* Scoped lock */                                                                            \
+      std::unique_lock<std::mutex> lock(resultMutex);                                              \
+      hcResults.push_back(result);                                                                 \
+    }                                                                                              \
   }
 
 // Do not call before all threads have joined
