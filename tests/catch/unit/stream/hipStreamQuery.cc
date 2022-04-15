@@ -26,19 +26,20 @@ THE SOFTWARE.
  *
  */
 TEST_CASE("Unit_hipStreamQuery_SubmitWorkOnStreamAndQueryNullStream") {
-  {
-    hipStream_t stream;
-    HIP_CHECK(hipStreamCreate(&stream));
+  hipStream_t stream;
+  HIP_CHECK(hipStreamCreate(&stream));
 
-    HIP_CHECK(hipStreamQuery(hip::nullStream));
-    hip::stream::waiting_kernel<<<1, 1, 0, stream>>>();
-    HIP_CHECK_ERROR(hipStreamQuery(hip::nullStream), hipErrorNotReady);
+  HIP_CHECK(hipStreamQuery(hip::nullStream));
+  hip::stream::waiting_kernel<<<1, 1, 0, stream>>>();
+  HIP_CHECK_ERROR(hipStreamQuery(hip::nullStream), hipErrorNotReady);
 
-    std::thread signalingThread = hip::stream::startSignalingThread();
-    HIP_CHECK(hipDeviceSynchronize());
-    signalingThread.join();
-    HIP_CHECK(hipStreamDestroy(stream));
-  }
+  std::thread signalingThread = hip::stream::startSignalingThread();
+  HIP_CHECK(hipDeviceSynchronize());
+
+  HIP_CHECK_THREAD_FINALIZE();
+
+  signalingThread.join();
+  HIP_CHECK(hipStreamDestroy(stream));
 }
 
 /**
@@ -54,4 +55,5 @@ TEST_CASE("Unit_hipStreamQuery_NullStreamQuery") {
   std::thread signalingThread = hip::stream::startSignalingThread();
   HIP_CHECK(hipStreamSynchronize(hip::nullStream));
   signalingThread.join();
+  HIP_CHECK_THREAD_FINALIZE();
 }

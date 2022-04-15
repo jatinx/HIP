@@ -191,14 +191,13 @@ void funcTestsForAllPriorityLevelsWrtNullStrm(unsigned int flags,
  * Scenario: Queue tasks in each of these streams and default stream.
  * Validate the calculated results.
  */
-void queueTasksInStreams(std::vector<hipStream_t> *stream,
-                         const int arrsize) {
-  size_t size = MEMCPYSIZE2*sizeof(int);
+void queueTasksInStreams(std::vector<hipStream_t>* stream, const int arrsize) {
+  size_t size = MEMCPYSIZE2 * sizeof(int);
   // Allocate memory
-  int **A_d = reinterpret_cast<int**>(malloc(arrsize*sizeof(int *)));
-  int **C_d = reinterpret_cast<int**>(malloc(arrsize*sizeof(int *)));
-  int **A_h = reinterpret_cast<int**>(malloc(arrsize*sizeof(int *)));
-  int **C_h = reinterpret_cast<int**>(malloc(arrsize*sizeof(int *)));
+  int** A_d = reinterpret_cast<int**>(malloc(arrsize * sizeof(int*)));
+  int** C_d = reinterpret_cast<int**>(malloc(arrsize * sizeof(int*)));
+  int** A_h = reinterpret_cast<int**>(malloc(arrsize * sizeof(int*)));
+  int** C_h = reinterpret_cast<int**>(malloc(arrsize * sizeof(int*)));
 
   HIPASSERT(A_d != nullptr);
   HIPASSERT(C_d != nullptr);
@@ -210,8 +209,8 @@ void queueTasksInStreams(std::vector<hipStream_t> *stream,
     HIPASSERT(A_h[idx] != nullptr);
     C_h[idx] = reinterpret_cast<int*>(malloc(size));
     HIPASSERT(C_h[idx] != nullptr);
-    HIPCHECK(hipMalloc(&A_d[idx], size));
-    HIPCHECK(hipMalloc(&C_d[idx], size));
+    HIP_CHECK_THREAD(hipMalloc(&A_d[idx], size));
+    HIP_CHECK_THREAD(hipMalloc(&C_d[idx], size));
   }
   // Initialize host memory
   constexpr int initVal = 2;
@@ -222,22 +221,20 @@ void queueTasksInStreams(std::vector<hipStream_t> *stream,
   }
   // Launch task on each stream
   for (int idx = 0; idx < arrsize; idx++) {
-    HIPCHECK(hipMemcpyAsync(A_d[idx], A_h[idx], size,
-             hipMemcpyHostToDevice, (*stream)[idx]));
-    hipLaunchKernelGGL((HipTest::vector_square), dim3(GRIDSIZE),
-                        dim3(BLOCKSIZE), 0, (*stream)[idx], A_d[idx],
-                        C_d[idx], MEMCPYSIZE2);
-    HIPCHECK(hipMemcpyAsync(C_h[idx], C_d[idx], size,
-             hipMemcpyDeviceToHost, (*stream)[idx]));
+    HIP_CHECK_THREAD(
+        hipMemcpyAsync(A_d[idx], A_h[idx], size, hipMemcpyHostToDevice, (*stream)[idx]));
+    hipLaunchKernelGGL((HipTest::vector_square), dim3(GRIDSIZE), dim3(BLOCKSIZE), 0, (*stream)[idx],
+                       A_d[idx], C_d[idx], MEMCPYSIZE2);
+    HIP_CHECK_THREAD(
+        hipMemcpyAsync(C_h[idx], C_d[idx], size, hipMemcpyDeviceToHost, (*stream)[idx]));
   }
 
   bool isPassed = true;
   // Validate the output of each queue
   for (int idx = 0; idx < arrsize; idx++) {
-    HIPCHECK(hipStreamSynchronize((*stream)[idx]));
+    HIP_CHECK_THREAD(hipStreamSynchronize((*stream)[idx]));
     for (int idy = 0; idy < MEMCPYSIZE2; idy++) {
       if (C_h[idx][idy] != A_h[idx][idy] * A_h[idx][idy]) {
-        UNSCOPED_INFO("Data mismatch at idx:" << idx << " idy:" << idy);
         isPassed = false;
         break;
       }
@@ -246,8 +243,8 @@ void queueTasksInStreams(std::vector<hipStream_t> *stream,
   }
   // Deallocate memory
   for (int idx = 0; idx < arrsize; idx++) {
-    HIPCHECK(hipFree(reinterpret_cast<void*>(C_d[idx])));
-    HIPCHECK(hipFree(reinterpret_cast<void*>(A_d[idx])));
+    HIP_CHECK_THREAD(hipFree(reinterpret_cast<void*>(C_d[idx])));
+    HIP_CHECK_THREAD(hipFree(reinterpret_cast<void*>(A_d[idx])));
     free(C_h[idx]);
     free(A_h[idx]);
   }
@@ -296,13 +293,15 @@ bool runFuncTestsForAllPriorityLevelsMultThread(unsigned int flags) {
   }
 
   for (int i = 0; i < TOTALTHREADS; i++) {
-    T[i] = std::thread(queueTasksInStreams,
-                       &stream, numOfPriorities + 1);
+    T[i] = std::thread(queueTasksInStreams, &stream, numOfPriorities + 1);
   }
 
   for (int i=0; i < TOTALTHREADS; i++) {
     T[i].join();
   }
+
+  HIP_CHECK_THREAD_FINALIZE();
+
   if (g_thTestPassed) {
     TestPassed = true;
   } else {

@@ -64,13 +64,14 @@ TEST_CASE("Unit_hipStreamPerThread_Basic") {
 TEST_CASE("Unit_hipStreamPerThread_StreamQuery") {
   std::vector<std::thread> threads(MAX_THREAD_CNT);
 
-  for (auto &th : threads) {
-    th = std::thread([](){HIP_CHECK(hipStreamQuery(hipStreamPerThread));});
+  for (auto& th : threads) {
+    th = std::thread([]() { HIP_CHECK_THREAD(hipStreamQuery(hipStreamPerThread)); });
   }
 
   for (auto& th : threads) {
     th.join();
   }
+  HIP_CHECK_THREAD_FINALIZE();
   REQUIRE(true);
 }
 
@@ -78,13 +79,14 @@ TEST_CASE("Unit_hipStreamPerThread_StreamSynchronize") {
   constexpr unsigned int MAX_THREAD_CNT = 10;
   std::vector<std::thread> threads(MAX_THREAD_CNT);
 
-  for (auto &th : threads) {
-    th = std::thread([](){HIP_CHECK(hipStreamSynchronize(hipStreamPerThread));});
+  for (auto& th : threads) {
+    th = std::thread([]() { HIP_CHECK_THREAD(hipStreamSynchronize(hipStreamPerThread)); });
   }
 
   for (auto& th : threads) {
     th.join();
   }
+  HIP_CHECK_THREAD_FINALIZE();
   REQUIRE(true);
 }
 

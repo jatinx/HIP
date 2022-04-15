@@ -177,7 +177,7 @@ void clusterAllocs(int numAllocs, size_t minSize, size_t maxSize) {
         "(%4.2fMB)\n",
         i, free, (free / 1024.0 / 1024.0), totalDeviceAllocated[i],
         (totalDeviceAllocated[i]) / 1024.0 / 1024.0, total, (total / 1024.0 / 1024.0));
-    assert(free + totalDeviceAllocated[i] <= total);
+    assert(free + totalDeviceAllocated[i] <= total); // FIXME refactor to check outside threads
   }
 
   // Now look up each pointer we inserted and verify we can find it:
