@@ -335,7 +335,7 @@ template <typename T> void freeArraysForHost(T* A_h, T* B_h, T* C_h, bool usePin
 }
 
 template <typename T>
-bool freeArraysT(T* A_d, T* B_d, T* C_d, T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
+void freeArraysT(T* A_d, T* B_d, T* C_d, T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
   if (A_d) {
     HIP_CHECK_THREAD(hipFree(A_d));
   }
@@ -350,7 +350,7 @@ bool freeArraysT(T* A_d, T* B_d, T* C_d, T* A_h, T* B_h, T* C_h, bool usePinnedH
 }
 
 template <typename T>
-bool freeArrays(T* A_d, T* B_d, T* C_d, T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
+void freeArrays(T* A_d, T* B_d, T* C_d, T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
   if (A_d) {
     HIP_CHECK(hipFree(A_d));
   }
