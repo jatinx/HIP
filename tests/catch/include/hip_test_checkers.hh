@@ -181,31 +181,6 @@ bool initArrays(T** A_d, T** B_d, T** C_d, T** A_h, T** B_h, T** C_h, size_t N,
   return initArraysForHost(A_h, B_h, C_h, N, usePinnedHost);
 }
 
-template <typename T> bool freeArraysForHost(T* A_h, T* B_h, T* C_h, bool usePinnedHost) {
-  if (usePinnedHost) {
-    if (A_h) {
-      HIP_CHECK(hipHostFree(A_h));
-    }
-    if (B_h) {
-      HIP_CHECK(hipHostFree(B_h));
-    }
-    if (C_h) {
-      HIP_CHECK(hipHostFree(C_h));
-    }
-  } else {
-    if (A_h) {
-      free(A_h);
-    }
-    if (B_h) {
-      free(B_h);
-    }
-    if (C_h) {
-      free(C_h);
-    }
-  }
-  return true;
-}
-
 // Threaded version of setDefaultData to be called from multi thread tests
 // Call HIP_CHECK_THREAD_FINALIZE after joining
 template <typename T> void setDefaultDataT(size_t numElements, T* A_h, T* B_h, T* C_h) {
