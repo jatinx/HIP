@@ -62,7 +62,7 @@ struct HCResult {
   std::string call;
   bool condition;
   HCResult(size_t l, std::string f, hipError_t r, std::string c, bool cres = true)
-      : line(l), file(f), result(r), call(c), condition(res) {}
+      : line(l), file(f), result(r), call(c), condition(cres) {}
 };
 
 static std::vector<HCResult> hcResults;  // Store results to validate at the end of threads so that
