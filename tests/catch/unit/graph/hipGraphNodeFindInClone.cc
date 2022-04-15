@@ -135,7 +135,8 @@ void hipGraphNodeFindInClone_Func(bool ModifyOrigGraph = false) {
   size_t NElem{N};
 
   HipTest::initArrays(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N, false);
-  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
+  unsigned blocks = 0;
+  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
 
   HIP_CHECK(hipGraphCreate(&graph, 0));
 

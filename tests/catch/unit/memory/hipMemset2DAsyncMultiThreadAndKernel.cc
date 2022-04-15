@@ -61,7 +61,8 @@ TEST_CASE("Unit_hipMemset2DAsync_WithKernel") {
   unsigned blocks{};
   int validateCount{};
 
-  blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
+  blocks = 0;
+  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
   HIP_CHECK(hipMallocPitch(reinterpret_cast<void**>(&A_d), &pitch_A, width, NUM_H));
   HIP_CHECK(hipMallocPitch(reinterpret_cast<void**>(&B_d), &pitch_B, width, NUM_H));
 

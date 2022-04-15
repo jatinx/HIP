@@ -73,7 +73,8 @@ void test(unsigned testMask, int* C_d, int* C_h, int64_t numElements, hipStream_
     unsigned blocksPerCU = 6;
     unsigned threadsPerBlock = 256;
 
-    unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, numElements);
+    unsigned blocks = 0;
+    HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, numElements, blocks);
 
     HIP_CHECK(hipEventRecord(timingDisabled, stream));
     // sandwhich a kernel:

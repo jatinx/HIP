@@ -538,8 +538,8 @@ TEMPLATE_TEST_CASE("Unit_hipMemcpy_PinnedRegMemWithKernelLaunch",
     // 2 refers to register Memory
     int MallocPinType = GENERATE(0, 1);
     size_t Nbytes = NUM_ELM * sizeof(TestType);
-    unsigned blocks = HipTest::setNumBlocks(blocksPerCU,
-                                            threadsPerBlock, NUM_ELM);
+    unsigned blocks = 0;
+    HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, NUM_ELM, blocks);
 
     TestType *A_d{nullptr}, *B_d{nullptr}, *C_d{nullptr};
     TestType *X_d{nullptr}, *Y_d{nullptr}, *Z_d{nullptr};

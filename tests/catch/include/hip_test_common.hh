@@ -173,18 +173,33 @@ static inline double elapsed_time(long long startTimeUs, long long stopTimeUs) {
   return ((double)(stopTimeUs - startTimeUs)) / ((double)(1000));
 }
 
-static inline unsigned setNumBlocks(unsigned blocksPerCU, unsigned threadsPerBlock, size_t N) {
-  int device;
+static inline void setNumBlocks(unsigned blocksPerCU, unsigned threadsPerBlock, size_t N,
+                                unsigned& blocks) {
+  int device{0};
   HIP_CHECK(hipGetDevice(&device));
-  hipDeviceProp_t props;
+  hipDeviceProp_t props{};
   HIP_CHECK(hipGetDeviceProperties(&props, device));
 
-  unsigned blocks = props.multiProcessorCount * blocksPerCU;
+  blocks = props.multiProcessorCount * blocksPerCU;
   if (blocks * threadsPerBlock > N) {
     blocks = (N + threadsPerBlock - 1) / threadsPerBlock;
   }
+}
 
-  return blocks;
+// Threaded version of setNumBlocks - to be used in multi threaded test
+// Why? because catch2 does not support multithreaded macro calls
+// Make sure you call HIP_CHECK_THREAD_FINALIZE after your threads join
+static inline void setNumBlocksT(unsigned blocksPerCU, unsigned threadsPerBlock, size_t N,
+                                 unsigned& blocks) {
+  int device{0};
+  HIP_CHECK_THREAD(hipGetDevice(&device));
+  hipDeviceProp_t props{};
+  HIP_CHECK_THREAD(hipGetDeviceProperties(&props, device));
+
+  blocks = props.multiProcessorCount * blocksPerCU;
+  if (blocks * threadsPerBlock > N) {
+    blocks = (N + threadsPerBlock - 1) / threadsPerBlock;
+  }
 }
 
 static inline int RAND_R(unsigned* rand_seed) {

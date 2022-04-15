@@ -172,7 +172,8 @@ TEST_CASE("Unit_hipMemsetAsync_VerifyExecutionWithKernel") {
   int numDevices = 0;
   bool ret, UseStrmPerThrd = false;
 
-  blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
+  blocks = 0;
+  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
 
   HIP_CHECK(hipGetDeviceCount(&numDevices));
   REQUIRE(numDevices > 0);

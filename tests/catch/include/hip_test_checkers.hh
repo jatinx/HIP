@@ -221,19 +221,4 @@ bool freeArrays(T* A_d, T* B_d, T* C_d, T* A_h, T* B_h, T* C_h, bool usePinnedHo
   return freeArraysForHost(A_h, B_h, C_h, usePinnedHost);
 }
 
-template <typename T>
-unsigned setNumBlocks(T blocksPerCU, T threadsPerBlock,
-    size_t N) {
-  int device;
-  HIP_CHECK(hipGetDevice(&device));
-  hipDeviceProp_t props;
-  HIP_CHECK(hipGetDeviceProperties(&props, device));
-
-  unsigned blocks = props.multiProcessorCount * blocksPerCU;
-  if (blocks * threadsPerBlock > N) {
-    blocks = (N + threadsPerBlock - 1) / threadsPerBlock;
-  }
-  return blocks;
-}
-
 }  // namespace HipTest

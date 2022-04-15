@@ -61,7 +61,8 @@ TEST_CASE("Unit_hipGraphGetRootNodes_Functional") {
 
   HIP_CHECK(hipStreamCreate(&streamForGraph));
   HipTest::initArrays(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N, false);
-  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
+  unsigned blocks = 0;
+  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
 
   HIP_CHECK(hipGraphCreate(&graph, 0));
   HIP_CHECK(hipGraphAddMemcpyNode1D(&memcpyNode, graph, NULL, 0, A_d, A_h,

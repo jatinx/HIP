@@ -44,7 +44,8 @@ static unsigned threadsPerBlock{256};
 
 template <typename T>
 void Thread_func(T* A_d, T* B_d, T* C_d, T* C_h, size_t Nbytes, hipStream_t mystream) {
-  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N_ELMTS);
+  unsigned blocks = 0;
+  HipTest::setNumBlocksT(blocksPerCU, threadsPerBlock, N_ELMTS, blocks);
   hipLaunchKernelGGL(HipTest::vector_square, dim3(blocks), dim3(threadsPerBlock), 0, mystream, A_d,
                      C_d, N_ELMTS);
   HIP_CHECK_THREAD(hipMemcpyAsync(C_h, C_d, Nbytes, hipMemcpyDeviceToHost, mystream));
@@ -60,7 +61,8 @@ template <typename T> void Thread_func_MultiStream() {
   T *A_d{nullptr}, *B_d{nullptr}, *C_d{nullptr};
   T *A_h{nullptr}, *B_h{nullptr}, *C_h{nullptr};
   size_t Nbytes = N_ELMTS * sizeof(T);
-  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N_ELMTS);
+  unsigned blocks = 0;
+  HipTest::setNumBlocksT(blocksPerCU, threadsPerBlock, N_ELMTS, blocks);
 
   HipTest::initArrays(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N_ELMTS, false);
   hipStream_t mystream;
@@ -315,8 +317,8 @@ TEMPLATE_TEST_CASE("Unit_hipMemcpyAsync_PinnedRegMemWithKernelLaunch",
     // 2 refers to register Memory
     int MallocPinType = GENERATE(0, 1);
     size_t Nbytes = NUM_ELM * sizeof(TestType);
-    unsigned blocks = HipTest::setNumBlocks(blocksPerCU,
-                                            threadsPerBlock, NUM_ELM);
+    unsigned blocks = 0;
+    HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, NUM_ELM, blocks);
 
     TestType *A_d{nullptr}, *B_d{nullptr}, *C_d{nullptr};
     TestType *X_d{nullptr}, *Y_d{nullptr}, *Z_d{nullptr};

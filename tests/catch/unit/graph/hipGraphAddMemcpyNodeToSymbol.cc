@@ -333,7 +333,8 @@ TEST_CASE("Unit_hipGraphAddMemcpyNodeToSymbol_MemcpyToSymbolNodeWithKernel") {
   constexpr size_t Nbytes = SIZE * sizeof(int);
   constexpr auto blocksPerCU = 6;  // to hide latency
   constexpr auto threadsPerBlock = 256;
-  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, SIZE);
+  unsigned blocks = 0;
+  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, SIZE, blocks);
   hipGraphNode_t memcpytosymbolkernel, memcpyD2H_B;
   hipKernelNodeParams kernelNodeParams{};
   int *A_d{nullptr}, *B_d{nullptr};
