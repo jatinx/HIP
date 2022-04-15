@@ -193,7 +193,7 @@ static void validateMemoryOnGpuMThread(int gpu, bool& TestPassed, bool concurOnO
   size_t Nbytes = N * sizeof(int);
   HIP_CHECK_THREAD(hipSetDevice(gpu));
   HIP_CHECK_THREAD(hipMemGetInfo(&prevAvl, &prevTot));
-  HipTest::initArrays(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N, false);
+  HipTest::initArraysT(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N, false);
 
   unsigned blocks = 0;
   HipTest::setNumBlocksT(blocksPerCU, threadsPerBlock, N, blocks);
@@ -212,7 +212,7 @@ static void validateMemoryOnGpuMThread(int gpu, bool& TestPassed, bool concurOnO
     return;
   }
 
-  HipTest::freeArrays(A_d, B_d, C_d, A_h, B_h, C_h, false);
+  HipTest::freeArraysT(A_d, B_d, C_d, A_h, B_h, C_h, false);
   HIP_CHECK_THREAD(hipMemGetInfo(&curAvl, &curTot));
 
   if (!concurOnOneGPU && (prevAvl != curAvl || prevTot != curTot)) {

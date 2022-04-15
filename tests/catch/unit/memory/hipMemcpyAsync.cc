@@ -64,7 +64,7 @@ template <typename T> void Thread_func_MultiStream() {
   unsigned blocks = 0;
   HipTest::setNumBlocksT(blocksPerCU, threadsPerBlock, N_ELMTS, blocks);
 
-  HipTest::initArrays(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N_ELMTS, false);
+  HipTest::initArraysT(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N_ELMTS, false);
   hipStream_t mystream;
   HIP_CHECK_THREAD(hipStreamCreateWithFlags(&mystream, hipStreamNonBlocking));
   HIP_CHECK_THREAD(hipMemcpyAsync(A_d, A_h, Nbytes, hipMemcpyHostToDevice, mystream));
@@ -85,8 +85,8 @@ template <typename T> void Thread_func_MultiStream() {
     }
   }
   // Releasing resources
-  HipTest::freeArrays<T>(A_d, B_d, C_d, A_h, B_h, C_h, false);
-  assert(Data_mismatch == 0);
+  HipTest::freeArraysT<T>(A_d, B_d, C_d, A_h, B_h, C_h, false);
+  REQUIRE_THREAD(Data_mismatch == 0);
 }
 
 /*
@@ -283,8 +283,8 @@ TEMPLATE_TEST_CASE("Unit_hipMemcpyAsync_hipMultiMemcpyMultiThread", "",
   Thread_count.exchange(0);
 }
 
-TEMPLATE_TEST_CASE("Unit_hipMemcpyAsync_hipMultiMemcpyMultiThreadMultiStream",
-                   "", int, float, double) {
+TEMPLATE_TEST_CASE("Unit_hipMemcpyAsync_hipMultiMemcpyMultiThreadMultiStream", "", int, float,
+                   double) {
   std::thread T[NUM_THREADS];
   for (int i = 0; i < NUM_THREADS; i++) {
     T[i] = std::thread(Thread_func_MultiStream<TestType>);
