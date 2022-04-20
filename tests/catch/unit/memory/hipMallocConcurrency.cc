@@ -96,8 +96,7 @@ static bool validateMemoryOnGPU(int gpu, bool concurOnOneGPU = false) {
   HIP_CHECK(hipMemGetInfo(&prevAvl, &prevTot));
   HipTest::initArrays(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N, false);
 
-  unsigned blocks = 0;
-  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
+  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
 
   HIP_CHECK(hipMemcpy(A_d, A_h, Nbytes, hipMemcpyHostToDevice));
   HIP_CHECK(hipMemcpy(B_d, B_h, Nbytes, hipMemcpyHostToDevice));
@@ -196,7 +195,7 @@ static void validateMemoryOnGpuMThread(int gpu, bool& TestPassed, bool concurOnO
   HipTest::initArraysT(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N, false);
 
   unsigned blocks = 0;
-  HipTest::setNumBlocksT(blocksPerCU, threadsPerBlock, N, blocks);
+  HipTest::setNumBlocksThread(blocksPerCU, threadsPerBlock, N, blocks);
 
   HIP_CHECK_THREAD(hipMemcpy(A_d, A_h, Nbytes, hipMemcpyHostToDevice));
   HIP_CHECK_THREAD(hipMemcpy(B_d, B_h, Nbytes, hipMemcpyHostToDevice));

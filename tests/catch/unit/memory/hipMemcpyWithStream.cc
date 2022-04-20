@@ -86,8 +86,7 @@ void TestwithOnestream(void) {
   int *A_d, *B_d, *C_d;
   int *A_h, *B_h, *C_h;
 
-  unsigned blocks = 0;
-  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
+  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
   HipTest::initArrays(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N, false);
 
   hipStream_t stream;
@@ -114,8 +113,7 @@ void TestwithTwoStream(void) {
   int *A_d[NUM_STREAMS], *B_d[NUM_STREAMS], *C_d[NUM_STREAMS];
   int *A_h[NUM_STREAMS], *B_h[NUM_STREAMS], *C_h[NUM_STREAMS];
 
-  unsigned blocks = 0;
-  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
+  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
 
   for (int i=0; i < NUM_STREAMS; ++i) {
     HipTest::initArrays(&A_d[i], &B_d[i], &C_d[i],
@@ -158,8 +156,7 @@ void TestDtoDonSameDevice(void) {
   int *A_d[NUM_STREAMS], *B_d[NUM_STREAMS], *C_d[NUM_STREAMS];
   int *A_h[NUM_STREAMS], *B_h[NUM_STREAMS], *C_h[NUM_STREAMS];
 
-  unsigned blocks = 0;
-  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
+  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
 
   HipTest::initArrays(&A_d[0], &B_d[0], &C_d[0],
                       &A_h[0], &B_h[0], &C_h[0], N, false);
@@ -234,8 +231,7 @@ void TestOnMultiGPUwithOneStream(void) {
   if (NumDevices <= 1) {
     SUCCEED("NumDevices <2");
   } else {
-    unsigned blocks = 0;
-    HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
+    unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
     int *A_d[MaxGPUDevices], *B_d[MaxGPUDevices], *C_d[MaxGPUDevices];
     int *A_h[MaxGPUDevices], *B_h[MaxGPUDevices], *C_h[MaxGPUDevices];
 
@@ -289,8 +285,7 @@ void TestkindDtoH(void) {
   int *A_d, *B_d, *C_d;
   int *A_h, *B_h, *C_h;
 
-  unsigned blocks = 0;
-  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
+  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
   HipTest::initArrays(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N, false);
 
   hipStream_t stream;
@@ -316,8 +311,7 @@ void TestkindDtoD(void) {
   size_t Nbytes = N * sizeof(int);
   int NumDevices = 0;
 
-  unsigned blocks = 0;
-  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
+  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
   HIP_CHECK(hipGetDeviceCount(&NumDevices));
   // If you have single GPU machine the return
   if (NumDevices <= 1) {
@@ -406,8 +400,7 @@ void TestkindDefault(void) {
   int *A_d, *B_d, *C_d;
   int *A_h, *B_h, *C_h;
 
-  unsigned blocks = 0;
-  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
+  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
   HipTest::initArrays(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N, false);
 
   hipStream_t stream;
@@ -430,8 +423,7 @@ void TestkindDefaultForDtoD(void) {
   size_t Nbytes = N * sizeof(int);
   int NumDevices = 0;
 
-  unsigned blocks = 0;
-  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
+  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
   HIP_CHECK(hipGetDeviceCount(&NumDevices));
   // Test case will not run on single GPU setup.
   if (NumDevices <= 1) {

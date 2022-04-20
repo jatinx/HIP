@@ -36,9 +36,10 @@ TEST_CASE("Unit_hipStreamQuery_SubmitWorkOnStreamAndQueryNullStream") {
   std::thread signalingThread = hip::stream::startSignalingThread();
   HIP_CHECK(hipDeviceSynchronize());
 
+  signalingThread.join();
+  
   HIP_CHECK_THREAD_FINALIZE();
 
-  signalingThread.join();
   HIP_CHECK(hipStreamDestroy(stream));
 }
 

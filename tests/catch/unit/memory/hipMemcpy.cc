@@ -214,8 +214,8 @@ void memcpytest2(DeviceMemory<T>* dmem, HostMemory<T>* hmem, size_t numElements,
 
   hmem->reset(numElements);
 
-  assert(numElements <= dmem->maxNumElements());
-  assert(numElements <= hmem->maxNumElements());
+  REQUIRE_THREAD(numElements <= dmem->maxNumElements());
+  REQUIRE_THREAD(numElements <= hmem->maxNumElements());
 
 
   if (useHostToHost) {
@@ -328,7 +328,7 @@ void memcpytest2_offsets(size_t maxElem, bool devOffsets, bool hostOffsets) {
   size_t elem = maxElem / 2;
 
   for (size_t offset = 0; offset < 512; offset++) {
-    assert(elem + offset < maxElem);
+    REQUIRE(elem + offset < maxElem);
     if (devOffsets) {
       memD.offset(offset);
     }
@@ -538,8 +538,7 @@ TEMPLATE_TEST_CASE("Unit_hipMemcpy_PinnedRegMemWithKernelLaunch",
     // 2 refers to register Memory
     int MallocPinType = GENERATE(0, 1);
     size_t Nbytes = NUM_ELM * sizeof(TestType);
-    unsigned blocks = 0;
-    HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, NUM_ELM, blocks);
+    unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, NUM_ELM);
 
     TestType *A_d{nullptr}, *B_d{nullptr}, *C_d{nullptr};
     TestType *X_d{nullptr}, *Y_d{nullptr}, *Z_d{nullptr};

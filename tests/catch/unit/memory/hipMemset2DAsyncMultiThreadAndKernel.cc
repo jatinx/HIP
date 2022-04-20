@@ -58,11 +58,9 @@ TEST_CASE("Unit_hipMemset2DAsync_WithKernel") {
   size_t width = NUM_W * sizeof(char);
   size_t sizeElements = width * NUM_H;
   size_t elements = NUM_W * NUM_H;
-  unsigned blocks{};
   int validateCount{};
 
-  blocks = 0;
-  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
+  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
   HIP_CHECK(hipMallocPitch(reinterpret_cast<void**>(&A_d), &pitch_A, width, NUM_H));
   HIP_CHECK(hipMallocPitch(reinterpret_cast<void**>(&B_d), &pitch_B, width, NUM_H));
 

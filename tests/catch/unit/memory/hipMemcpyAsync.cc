@@ -34,9 +34,6 @@ This testcase verifies the following scenarios
 #define NUM_THREADS 16
 
 static constexpr auto NUM_ELM{1024 * 1024};
-
-
-
 static constexpr size_t N_ELMTS{32 * 1024};
 std::atomic<size_t> Thread_count { 0 };
 static unsigned blocksPerCU{6};  // to hide latency
@@ -45,7 +42,7 @@ static unsigned threadsPerBlock{256};
 template <typename T>
 void Thread_func(T* A_d, T* B_d, T* C_d, T* C_h, size_t Nbytes, hipStream_t mystream) {
   unsigned blocks = 0;
-  HipTest::setNumBlocksT(blocksPerCU, threadsPerBlock, N_ELMTS, blocks);
+  HipTest::setNumBlocksThread(blocksPerCU, threadsPerBlock, N_ELMTS, blocks);
   hipLaunchKernelGGL(HipTest::vector_square, dim3(blocks), dim3(threadsPerBlock), 0, mystream, A_d,
                      C_d, N_ELMTS);
   HIP_CHECK_THREAD(hipMemcpyAsync(C_h, C_d, Nbytes, hipMemcpyDeviceToHost, mystream));
@@ -62,7 +59,7 @@ template <typename T> void Thread_func_MultiStream() {
   T *A_h{nullptr}, *B_h{nullptr}, *C_h{nullptr};
   size_t Nbytes = N_ELMTS * sizeof(T);
   unsigned blocks = 0;
-  HipTest::setNumBlocksT(blocksPerCU, threadsPerBlock, N_ELMTS, blocks);
+  HipTest::setNumBlocksThread(blocksPerCU, threadsPerBlock, N_ELMTS, blocks);
 
   HipTest::initArraysT(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N_ELMTS, false);
   hipStream_t mystream;
@@ -317,8 +314,7 @@ TEMPLATE_TEST_CASE("Unit_hipMemcpyAsync_PinnedRegMemWithKernelLaunch",
     // 2 refers to register Memory
     int MallocPinType = GENERATE(0, 1);
     size_t Nbytes = NUM_ELM * sizeof(TestType);
-    unsigned blocks = 0;
-    HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, NUM_ELM, blocks);
+    unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, NUM_ELM);
 
     TestType *A_d{nullptr}, *B_d{nullptr}, *C_d{nullptr};
     TestType *X_d{nullptr}, *Y_d{nullptr}, *Z_d{nullptr};

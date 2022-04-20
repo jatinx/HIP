@@ -236,7 +236,7 @@ void initArraysForHostT(T** A_h, T** B_h, T** C_h, size_t N, bool usePinnedHost 
     }
   }
 
-  setDefaultData(N, A_h ? *A_h : nullptr, B_h ? *B_h : nullptr, C_h ? *C_h : nullptr);
+  setDefaultDataT(N, A_h ? *A_h : nullptr, B_h ? *B_h : nullptr, C_h ? *C_h : nullptr);
 }
 
 // Threaded version of initArrays to be called from multi thread tests

@@ -49,7 +49,7 @@ void t1(hipEvent_t start, hipStream_t stream1, int clkRate, int* A, int* Ad) {
 
   hipLaunchKernelGGL(HIP_KERNEL_NAME(WaitKernel), dim3(1), dim3(1), 0, stream1, Ad, clkRate);
 
-  HIP_CHECK_THREAD(hipEventRecord(start, stream1));
+  HIPCHECK(hipEventRecord(start, stream1));
 }
 
 int main(int argc, char* argv[]) {

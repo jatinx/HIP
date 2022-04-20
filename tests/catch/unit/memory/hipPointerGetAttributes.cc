@@ -126,11 +126,10 @@ void clusterAllocs(int numAllocs, size_t minSize, size_t maxSize) {
   const int Max_Devices = 256;
   std::vector<SuperPointerAttribute> reference(numAllocs);
 
-  // FIXME remove assert
-  assert(minSize > 0);
-  assert(maxSize >= minSize);
+  REQUIRE_THREAD(minSize > 0);
+  REQUIRE_THREAD(maxSize >= minSize);
 
-  int numDevices;
+  int numDevices{0};
   HIP_CHECK_THREAD(hipGetDeviceCount(&numDevices));
 
   //---
@@ -139,6 +138,7 @@ void clusterAllocs(int numAllocs, size_t minSize, size_t maxSize) {
   for (int i = 0; i < numDevices; i++) {
     totalDeviceAllocated[i] = 0;
   }
+
   for (int i = 0; i < numAllocs; i++) {
     unsigned rand_seed = time(NULL);
     bool isDevice = HipTest::RAND_R(&rand_seed) & 0x1;
@@ -168,7 +168,7 @@ void clusterAllocs(int numAllocs, size_t minSize, size_t maxSize) {
   }
 
   for (int i = 0; i < numDevices; i++) {
-    size_t free, total;
+    size_t free{0}, total{0};
     HIP_CHECK_THREAD(hipSetDevice(i));
     HIP_CHECK_THREAD(hipMemGetInfo(&free, &total));
     printf(
@@ -177,7 +177,7 @@ void clusterAllocs(int numAllocs, size_t minSize, size_t maxSize) {
         "(%4.2fMB)\n",
         i, free, (free / 1024.0 / 1024.0), totalDeviceAllocated[i],
         (totalDeviceAllocated[i]) / 1024.0 / 1024.0, total, (total / 1024.0 / 1024.0));
-    assert(free + totalDeviceAllocated[i] <= total); // FIXME refactor to check outside threads
+    REQUIRE_THREAD(free + totalDeviceAllocated[i] <= total);
   }
 
   // Now look up each pointer we inserted and verify we can find it:
@@ -207,15 +207,11 @@ void clusterAllocs(int numAllocs, size_t minSize, size_t maxSize) {
 TEST_CASE("Unit_hipPointerGetAttributes_Basic") {
   HIP_CHECK(hipSetDevice(0));
   Nbytes = N * sizeof(char);
-  printf("\n");
-  printf("=============================================================\n");
-  printf("Simple Tests\n");
-  printf("=============================================================\n");
 
-  char* A_d;
-  char* A_Pinned_h;
-  char* A_OSAlloc_h;
-  hipError_t e;
+  char* A_d{nullptr};
+  char* A_Pinned_h{nullptr};
+  char* A_OSAlloc_h{nullptr};
+  hipError_t e = hipSuccess;
 
   HIP_CHECK(hipMalloc(&A_d, Nbytes));
   HIP_CHECK(hipHostMalloc(reinterpret_cast<void**>(&A_Pinned_h), Nbytes, hipHostMallocDefault));

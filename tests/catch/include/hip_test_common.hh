@@ -56,13 +56,13 @@ THE SOFTWARE.
 
 inline namespace internal {
 struct HCResult {
-  size_t line;
-  std::string file;
-  hipError_t result;
-  std::string call;
-  bool condition;
-  HCResult(size_t l, std::string f, hipError_t r, std::string c, bool cres = true)
-      : line(l), file(f), result(r), call(c), condition(cres) {}
+  size_t line;        // Line of check (HIP_CHECK_THREAD or REQUIRE_THREAD)
+  std::string file;   // File name of the check
+  hipError_t result;  // hipResult for HIP_CHECK_THREAD, for conditions its hipSuccess
+  std::string call;   // Call of HIP API or a bool condition
+  bool boolResult;    // If bool condition, result of call. For HIP Calls its true
+  HCResult(size_t l, std::string f, hipError_t r, std::string c, bool b = true)
+      : line(l), file(f), result(r), call(c), boolResult(b) {}
 };
 
 static std::vector<HCResult> hcResults;  // Store results to validate at the end of threads so that
@@ -111,7 +111,8 @@ static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of t
 
 // Do not call before all threads have joined
 #define HIP_CHECK_THREAD_FINALIZE()                                                                \
-  {                                                                                                \
+  { /* Scoped lock so no one can insert in it while we drain the vector */                         \
+    std::unique_lock<std::mutex> lock(resultMutex);                                                \
     if (hasErrorOccured.load() == true) {                                                          \
       UNSCOPED_INFO("Error has Occured");                                                          \
       hasErrorOccured.store(false);                                                                \
@@ -173,9 +174,9 @@ static inline double elapsed_time(long long startTimeUs, long long stopTimeUs) {
   return ((double)(stopTimeUs - startTimeUs)) / ((double)(1000));
 }
 
-static inline void setNumBlocks(unsigned blocksPerCU, unsigned threadsPerBlock, size_t N,
-                                unsigned& blocks) {
+static inline unsigned setNumBlocks(unsigned blocksPerCU, unsigned threadsPerBlock, size_t N) {
   int device{0};
+  unsigned blocks{0};
   HIP_CHECK(hipGetDevice(&device));
   hipDeviceProp_t props{};
   HIP_CHECK(hipGetDeviceProperties(&props, device));
@@ -184,14 +185,18 @@ static inline void setNumBlocks(unsigned blocksPerCU, unsigned threadsPerBlock, 
   if (blocks * threadsPerBlock > N) {
     blocks = (N + threadsPerBlock - 1) / threadsPerBlock;
   }
+  return blocks;
 }
 
 // Threaded version of setNumBlocks - to be used in multi threaded test
 // Why? because catch2 does not support multithreaded macro calls
 // Make sure you call HIP_CHECK_THREAD_FINALIZE after your threads join
-static inline void setNumBlocksT(unsigned blocksPerCU, unsigned threadsPerBlock, size_t N,
-                                 unsigned& blocks) {
+// Also you can not return in threaded functions, due to how HIP_CHECK_THREAD works
+static inline void setNumBlocksThread(unsigned blocksPerCU, unsigned threadsPerBlock, size_t N,
+                                      unsigned& blocks) {
   int device{0};
+  blocks = 0;  // incase error has occured in some other thread and the next call might not execute,
+               // we set the blocks size to 0
   HIP_CHECK_THREAD(hipGetDevice(&device));
   hipDeviceProp_t props{};
   HIP_CHECK_THREAD(hipGetDeviceProperties(&props, device));

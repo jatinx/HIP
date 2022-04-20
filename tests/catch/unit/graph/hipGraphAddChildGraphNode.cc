@@ -255,8 +255,7 @@ TEST_CASE("Unit_hipGraphAddChildGraphNode_MultipleChildNodes") {
   int *A_d{nullptr}, *B_d{nullptr}, *C_d{nullptr};
   int *A_h{nullptr}, *B_h{nullptr}, *C_h{nullptr};
   HipTest::initArrays(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N, false);
-  unsigned blocks = 0;
-  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
+  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
 
   HIP_CHECK(hipGraphCreate(&graph, 0));
   hipGraphNode_t memcpyH2D_A, memcpyH2D_B, childGraphNode1,
@@ -337,8 +336,7 @@ TEST_CASE("Unit_hipGraphAddChildGraphNode_SingleChildNode") {
 
   HIP_CHECK(hipStreamCreate(&streamForGraph));
   HipTest::initArrays(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N, false);
-  unsigned blocks = 0;
-  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
+  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
 
   HIP_CHECK(hipGraphCreate(&graph, 0));
   HIP_CHECK(hipGraphCreate(&childgraph, 0));

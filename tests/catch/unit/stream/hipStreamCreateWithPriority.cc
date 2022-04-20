@@ -199,16 +199,16 @@ void queueTasksInStreams(std::vector<hipStream_t>* stream, const int arrsize) {
   int** A_h = reinterpret_cast<int**>(malloc(arrsize * sizeof(int*)));
   int** C_h = reinterpret_cast<int**>(malloc(arrsize * sizeof(int*)));
 
-  HIPASSERT(A_d != nullptr);
-  HIPASSERT(C_d != nullptr);
-  HIPASSERT(A_h != nullptr);
-  HIPASSERT(C_h != nullptr);
+  REQUIRE_THREAD(A_d != nullptr);
+  REQUIRE_THREAD(C_d != nullptr);
+  REQUIRE_THREAD(A_h != nullptr);
+  REQUIRE_THREAD(C_h != nullptr);
 
   for (int idx = 0; idx < arrsize; idx++) {
     A_h[idx] = reinterpret_cast<int*>(malloc(size));
-    HIPASSERT(A_h[idx] != nullptr);
+    REQUIRE_THREAD(A_h[idx] != nullptr);
     C_h[idx] = reinterpret_cast<int*>(malloc(size));
-    HIPASSERT(C_h[idx] != nullptr);
+    REQUIRE_THREAD(C_h[idx] != nullptr);
     HIP_CHECK_THREAD(hipMalloc(&A_d[idx], size));
     HIP_CHECK_THREAD(hipMalloc(&C_d[idx], size));
   }

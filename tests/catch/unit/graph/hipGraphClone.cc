@@ -126,8 +126,7 @@ void hipGraphClone_Func(bool ModifyOrigGraph = false) {
 
   HIP_CHECK(hipStreamCreate(&streamForGraph));
   HipTest::initArrays(&A_d, &B_d, &C_d, &A_h, &B_h, &C_h, N, false);
-  unsigned blocks = 0;
-  HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N, blocks);
+  unsigned blocks = HipTest::setNumBlocks(blocksPerCU, threadsPerBlock, N);
 
   HIP_CHECK(hipGraphCreate(&graph, 0));
 
@@ -297,10 +296,7 @@ TEST_CASE("Unit_hipGraphClone_MultiThreaded") {
     HIP_CHECK_THREAD(hipGraphLaunch(graphExec, 0));
 
     for (size_t i = 0; i < N; i++) {
-      if (A_h[i] != B_h[i]) {
-        INFO("Validation failed A_h[i] " << A_h[i] << " B_h[i] " << B_h[i]);
-        REQUIRE(false); // FIXME, no CATCH2 macro in threads
-      }
+      REQUIRE_THREAD(A_h[i] == B_h[i]);
     }
 
     HIP_CHECK(hipGraphExecDestroy(graphExec));

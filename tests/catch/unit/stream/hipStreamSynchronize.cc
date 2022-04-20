@@ -54,6 +54,8 @@ TEST_CASE("Unit_hipStreamSynchronize_FinishWork") {
   HIP_CHECK(hipStreamQuery(stream));
   signalingThread.join();
 
+  HIP_CHECK_THREAD_FINALIZE();
+
   if (stream != hip::nullStream && stream != hip::streamPerThread) {
     HIP_CHECK(hipStreamDestroy(stream));
   }
@@ -105,6 +107,8 @@ TEST_CASE("Unit_hipStreamSynchronize_NullStreamSynchronization") {
     signalingThreads[i].join();
   }
 
+  HIP_CHECK_THREAD_FINALIZE();
+
   for (int i = 0; i < totalStreams; ++i) {
     HIP_CHECK(hipStreamDestroy(streams[i]));
     HIP_CHECK(hipFree(semaphores[i]));
@@ -145,12 +149,15 @@ TEST_CASE("Unit_hipStreamSynchronize_SynchronizeStreamAndQueryNullStream") {
   std::thread signalingThread = hip::stream::startSignalingThread(semaphore1);
   HIP_CHECK(hipStreamSynchronize(stream1));
   signalingThread.join();
+  HIP_CHECK_THREAD_FINALIZE();
+
   HIP_CHECK(hipStreamQuery(stream1));
   HIP_CHECK_ERROR(hipStreamQuery(stream2), hipErrorNotReady);
   HIP_CHECK_ERROR(hipStreamQuery(hip::nullStream), hipErrorNotReady);
 
   std::thread signalingThread2 = hip::stream::startSignalingThread(semaphore2);
   signalingThread2.join();
+  HIP_CHECK_THREAD_FINALIZE();
   HIP_CHECK(hipStreamSynchronize(stream2));
   HIP_CHECK(hipStreamQuery(stream2));
 
@@ -175,5 +182,6 @@ TEST_CASE("Unit_hipStreamSynchronize_NullStreamAndStreamPerThread") {
   HIP_CHECK_ERROR(hipStreamQuery(hip::streamPerThread), hipSuccess);
   HIP_CHECK_ERROR(hipStreamQuery(hip::nullStream), hipSuccess);
   signalingThread.join();
+  HIP_CHECK_THREAD_FINALIZE();
 }
 }  // namespace hipStreamSynchronizeTest
