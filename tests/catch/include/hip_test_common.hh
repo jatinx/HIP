@@ -56,13 +56,13 @@ THE SOFTWARE.
 
 inline namespace internal {
 struct HCResult {
-  size_t line;        // Line of check (HIP_CHECK_THREAD or REQUIRE_THREAD)
-  std::string file;   // File name of the check
-  hipError_t result;  // hipResult for HIP_CHECK_THREAD, for conditions its hipSuccess
-  std::string call;   // Call of HIP API or a bool condition
-  bool boolResult;    // If bool condition, result of call. For HIP Calls its true
+  size_t line;            // Line of check (HIP_CHECK_THREAD or REQUIRE_THREAD)
+  std::string file;       // File name of the check
+  hipError_t result;      // hipResult for HIP_CHECK_THREAD, for conditions its hipSuccess
+  std::string call;       // Call of HIP API or a bool condition
+  bool conditionsResult;  // If bool condition, result of call. For HIP Calls its true
   HCResult(size_t l, std::string f, hipError_t r, std::string c, bool b = true)
-      : line(l), file(f), result(r), call(c), boolResult(b) {}
+      : line(l), file(f), result(r), call(c), conditionsResult(b) {}
 };
 
 static std::vector<HCResult> hcResults;  // Store results to validate at the end of threads so that
@@ -122,7 +122,7 @@ static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of t
            << i.file << "\n    Line:: " << i.line << "\n    API:: " << i.call << "\n    Result:: " \
            << i.result << "\n    Result Str:: " << hipGetErrorString(i.result));                   \
       REQUIRE(((i.result == hipSuccess) || (i.result == hipErrorPeerAccessAlreadyEnabled)));       \
-      REQUIRE(i.condition);                                                                        \
+      REQUIRE(i.conditionsResult);                                                                 \
     }                                                                                              \
     hcResults.clear();                                                                             \
   }
