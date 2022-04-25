@@ -66,9 +66,46 @@ struct HCResult {
       : line(l), file(f), result(r), call(c), conditionsResult(b) {}
 };
 
-static std::vector<HCResult> hcResults;  // Store results to validate at the end of threads so that
-                                         // we can have proper test result count
-static std::mutex resultMutex;
+struct HCResults {
+  static HCResults& get() {
+    static HCResults instance;
+    return instance;
+  }
+
+ private:
+  std::vector<HCResult> results;
+  std::mutex resultMutex;
+
+  HCResults() {}
+
+ public:
+  HCResults
+  void insert(HCResult r) {
+    std::unique_lock<std::mutex> lock(resultMutex);
+    results.push_back(r);
+  }
+
+  void finalize() {
+    std::unique_lock<std::mutex> lock(resultMutex);
+    for (const auto& i : results) {
+      INFO("HIP API Result check\n    File:: "
+           << i.file << "\n    Line:: " << i.line << "\n    API:: " << i.call << "\n    Result:: "
+           << i.result << "\n    Result Str:: " << hipGetErrorString(i.result));
+      REQUIRE(((i.result == hipSuccess) || (i.result == hipErrorPeerAccessAlreadyEnabled)));
+      REQUIRE(i.conditionsResult);
+    }
+    results.clear();
+  }
+
+  ~HCResults() {
+    if (hcResults.size() != 0) {
+      std::cerr << "HIP_CHECK_THREAD_FINALIZE() has not been called after HIP_CHECK_THREAD\n"
+                << "Please call HIP_CHECK_THREAD_FINALIZE after joining threads"
+                << std::endl;
+    }
+  }
+};
+
 static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of threads if error has
                                                   // occurred in one of the threads
 }  // namespace internal
@@ -86,10 +123,7 @@ static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of t
       hasErrorOccured.store(true);                                                                 \
     }                                                                                              \
     HCResult result(__LINE__, __FILE__, localError, #error);                                       \
-    { /* Scoped lock */                                                                            \
-      std::unique_lock<std::mutex> lock(resultMutex);                                              \
-      hcResults.push_back(result);                                                                 \
-    }                                                                                              \
+    HCResults::get().insert(result);                                                               \
   }
 
 #define REQUIRE_THREAD(condition)                                                                  \
@@ -104,28 +138,17 @@ static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of t
       hasErrorOccured.store(true);                                                                 \
     }                                                                                              \
     HCResult result(__LINE__, __FILE__, hipSuccess, #condition, localResult);                      \
-    { /* Scoped lock */                                                                            \
-      std::unique_lock<std::mutex> lock(resultMutex);                                              \
-      hcResults.push_back(result);                                                                 \
-    }                                                                                              \
+    HCResults::get().insert(result);                                                               \
   }
 
 // Do not call before all threads have joined
 #define HIP_CHECK_THREAD_FINALIZE()                                                                \
-  { /* Scoped lock so no one can insert in it while we drain the vector */                         \
-    std::unique_lock<std::mutex> lock(resultMutex);                                                \
+  {                                                                                                \
     if (hasErrorOccured.load() == true) {                                                          \
       UNSCOPED_INFO("Error has Occured");                                                          \
       hasErrorOccured.store(false);                                                                \
     }                                                                                              \
-    for (const auto& i : hcResults) {                                                              \
-      INFO("HIP API Result check\n    File:: "                                                     \
-           << i.file << "\n    Line:: " << i.line << "\n    API:: " << i.call << "\n    Result:: " \
-           << i.result << "\n    Result Str:: " << hipGetErrorString(i.result));                   \
-      REQUIRE(((i.result == hipSuccess) || (i.result == hipErrorPeerAccessAlreadyEnabled)));       \
-      REQUIRE(i.conditionsResult);                                                                 \
-    }                                                                                              \
-    hcResults.clear();                                                                             \
+    HCResults::get().finalize();                                                                   \
   }
 
 #define HIPRTC_CHECK(error)                                                                        \
@@ -223,14 +246,5 @@ static inline int RAND_R(unsigned* rand_seed) {
  */
 inline void HIP_SKIP_TEST(char const* const reason) noexcept {
   std::cout << "Skipping test. Reason: " << reason << '\n' << "HIP_SKIP_THIS_TEST" << std::endl;
-}
-
-// function to verify that HIP_CHECK_THREAD_FINALIZE has been called
-static inline void hip_test_at_exit_handler() {
-  if (hcResults.size() != 0) {
-    std::clog << "HIP_CHECK_THREAD_FINALIZE() has not been called after HIP_CHECK_THREAD\n"
-              << "Please call HIP_CHECK_THREAD_FINALIZE after joining threads\n"
-              << std::endl;
-  }
 }
 }  // namespace HipTest
