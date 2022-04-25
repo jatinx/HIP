@@ -79,7 +79,7 @@ struct HCResults {
   HCResults() {}
 
  public:
-  HCResults void insert(HCResult r) {
+  void insert(HCResult r) {
     std::unique_lock<std::mutex> lock(resultMutex);
     results.push_back(r);
   }
