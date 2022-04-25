@@ -226,7 +226,7 @@ inline void HIP_SKIP_TEST(char const* const reason) noexcept {
 }
 
 // function to verify that HIP_CHECK_THREAD_FINALIZE has been called
-void hip_test_at_exit_handler() {
+static inline void hip_test_at_exit_handler() {
   if (hcResults.size() != 0) {
     std::clog << "HIP_CHECK_THREAD_FINALIZE() has not been called after HIP_CHECK_THREAD\n"
               << "Please call HIP_CHECK_THREAD_FINALIZE after joining threads\n"
