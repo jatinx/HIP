@@ -99,7 +99,9 @@ struct HCResults {
   ~HCResults() {
     if (results.size() != 0) {
       std::cerr << "HIP_CHECK_THREAD_FINALIZE() has not been called after HIP_CHECK_THREAD\n"
-                << "Please call HIP_CHECK_THREAD_FINALIZE after joining threads" << std::endl;
+                << "Please call HIP_CHECK_THREAD_FINALIZE after joining threads\n"
+                << "There is/are " << results.size() << " unchecked results from threads."
+                << std::endl;
     }
   }
 };
