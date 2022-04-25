@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <iostream>
 #include <iomanip>
 #include <mutex>
+#include <cstdlib>
 
 #define HIP_PRINT_STATUS(status) INFO(hipGetErrorName(status) << " at line: " << __LINE__);
 
@@ -222,5 +223,14 @@ static inline int RAND_R(unsigned* rand_seed) {
  */
 inline void HIP_SKIP_TEST(char const* const reason) noexcept {
   std::cout << "Skipping test. Reason: " << reason << '\n' << "HIP_SKIP_THIS_TEST" << std::endl;
+}
+
+// function to verify that HIP_CHECK_THREAD_FINALIZE has been called
+void hip_test_at_exit_handler() {
+  if (hcResults.size() != 0) {
+    std::clog << "HIP_CHECK_THREAD_FINALIZE() has not been called after HIP_CHECK_THREAD\n"
+              << "Please call HIP_CHECK_THREAD_FINALIZE after joining threads\n"
+              << std::endl;
+  }
 }
 }  // namespace HipTest
