@@ -79,8 +79,7 @@ struct HCResults {
   HCResults() {}
 
  public:
-  HCResults
-  void insert(HCResult r) {
+  HCResults void insert(HCResult r) {
     std::unique_lock<std::mutex> lock(resultMutex);
     results.push_back(r);
   }
@@ -98,10 +97,9 @@ struct HCResults {
   }
 
   ~HCResults() {
-    if (hcResults.size() != 0) {
+    if (results.size() != 0) {
       std::cerr << "HIP_CHECK_THREAD_FINALIZE() has not been called after HIP_CHECK_THREAD\n"
-                << "Please call HIP_CHECK_THREAD_FINALIZE after joining threads"
-                << std::endl;
+                << "Please call HIP_CHECK_THREAD_FINALIZE after joining threads" << std::endl;
     }
   }
 };
