@@ -104,8 +104,8 @@ void checkPointer(const SuperPointerAttribute& ref, int major, int minor, void* 
 
   hipError_t e = hipPointerGetAttributes(&attribs, pointer);
   if ((e != hipSuccess) || (attribs != ref._attrib)) {
-    HIP_CHECK(e);
-    REQUIRE(attribs != ref._attrib);
+    HIP_CHECK_THREAD(e);
+    REQUIRE_THREAD(attribs != ref._attrib);
   } else {
     printf("#%4d.%d GOOD:%p getattr ::  ", major, minor, pointer);
     printAttribs(&attribs);
@@ -256,7 +256,7 @@ TEST_CASE("Unit_hipPointerGetAttributes_Basic") {
   if (e != hipErrorInvalidValue) {
     REQUIRE(attribs.devicePointer != attribs2.devicePointer);
   }
-  hipFree(A_d);
+  HIP_CHECK(hipFree(A_d));
   e = hipPointerGetAttributes(&attribs, A_d);
   REQUIRE(e == hipErrorInvalidValue);
 
@@ -270,7 +270,7 @@ TEST_CASE("Unit_hipPointerGetAttributes_Basic") {
   REQUIRE((ptr1 + Nbytes / 2) == reinterpret_cast<char*>(attribs2.hostPointer));
 
 
-  hipHostFree(A_Pinned_h);
+  HIP_CHECK(hipHostFree(A_Pinned_h));
   e = hipPointerGetAttributes(&attribs, A_Pinned_h);
   REQUIRE(e == hipErrorInvalidValue);
 
@@ -282,14 +282,14 @@ TEST_CASE("Unit_hipPointerGetAttributes_Basic") {
 
 TEST_CASE("Unit_hipPointerGetAttributes_ClusterAlloc") {
   srand(0x100);
-  printf("\n=============================================\n");
   clusterAllocs(100, 1024 * 1, 1024 * 1024);
+  HIP_CHECK_THREAD_FINALIZE();
 }
 
 TEST_CASE("Unit_hipPointerGetAttributes_TinyClusterAlloc") {
   srand(0x200);
-  printf("\n=============================================\n");
   clusterAllocs(1000, 1, 10);  //  Many tiny allocations;
+  HIP_CHECK_THREAD_FINALIZE();
 }
 
 // Multi-threaded test with many simul allocs.

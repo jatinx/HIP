@@ -200,12 +200,11 @@ static inline double elapsed_time(long long startTimeUs, long long stopTimeUs) {
 
 static inline unsigned setNumBlocks(unsigned blocksPerCU, unsigned threadsPerBlock, size_t N) {
   int device{0};
-  unsigned blocks{0};
   HIP_CHECK(hipGetDevice(&device));
   hipDeviceProp_t props{};
   HIP_CHECK(hipGetDeviceProperties(&props, device));
 
-  blocks = props.multiProcessorCount * blocksPerCU;
+  unsigned blocks = props.multiProcessorCount * blocksPerCU;
   if (blocks * threadsPerBlock > N) {
     blocks = (N + threadsPerBlock - 1) / threadsPerBlock;
   }
