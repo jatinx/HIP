@@ -56,6 +56,8 @@ THE SOFTWARE.
   }
 
 inline namespace internal {
+static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of threads if error has
+                                                  // occurred in one of the threads
 struct HCResult {
   size_t line;            // Line of check (HIP_CHECK_THREAD or REQUIRE_THREAD)
   std::string file;       // File name of the check
@@ -93,11 +95,13 @@ struct HCResults {
       REQUIRE(((i.result == hipSuccess) || (i.result == hipErrorPeerAccessAlreadyEnabled)));
       REQUIRE(i.conditionsResult);
     }
-    results.clear();
+    results.clear();               // Clear the results after finalizing
+    hasErrorOccured.store(false);  // Clear the flag
   }
 
   ~HCResults() {
-    if (results.size() != 0) {
+    // Only show this message when there are unchecked results and no error has occured
+    if (results.size() != 0 && hasErrorOccured.load() == false) {
       std::cerr << "HIP_CHECK_THREAD_FINALIZE() has not been called after HIP_CHECK_THREAD\n"
                 << "Please call HIP_CHECK_THREAD_FINALIZE after joining threads\n"
                 << "There is/are " << results.size() << " unchecked results from threads."
@@ -105,9 +109,6 @@ struct HCResults {
     }
   }
 };
-
-static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of threads if error has
-                                                  // occurred in one of the threads
 }  // namespace internal
 
 // Threaded HIP_CHECKs
@@ -143,13 +144,7 @@ static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of t
 
 // Do not call before all threads have joined
 #define HIP_CHECK_THREAD_FINALIZE()                                                                \
-  {                                                                                                \
-    if (hasErrorOccured.load() == true) {                                                          \
-      UNSCOPED_INFO("Error has Occured");                                                          \
-      hasErrorOccured.store(false);                                                                \
-    }                                                                                              \
-    HCResults::get().finalize();                                                                   \
-  }
+  { HCResults::get().finalize(); }
 
 #define HIPRTC_CHECK(error)                                                                        \
   {                                                                                                \
