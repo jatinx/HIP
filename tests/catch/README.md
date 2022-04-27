@@ -97,7 +97,7 @@ These macros are to be used when your test is calling HIP APIs via the main thre
   - Usage: ```HIP_ASSERT(result == 10);```
 
 ### Multi Thread Macros
-These macros are to be used when you call HIP APIs in a multi threaded way. They exist because Catch2 ```REQUIRE``` and ```CHECK``` macros can not handle multi threaded calls. To solve this problem, following macros log all results for HIP APIs called via ```HIP_CHECK_THREAD``` and validate them after the threads end via ```HIP_CHECK_THREAD_FINALIZE```.
+These macros are to be used when you call HIP APIs in a multi threaded way. They exist because Catch2 ```REQUIRE``` and ```CHECK``` macros can not handle multi threaded calls. To solve this problem, two macros are added```HIP_CHECK_THREAD``` and ```REQUIRE_THREAD``` which can be used to check result of HIP APIs and test assertions respectively. The results can be validate after the threads join via ```HIP_CHECK_THREAD_FINALIZE```.
 
 Note: These should used in ```std::thread``` only. For multi proc guidelines look at [MultiProc Macros](#multi-process-macros) and [SpawnProc Class](#multiproc-management-class)
 
@@ -154,7 +154,7 @@ These macros are to be called in multi process tests, inside a process which get
 - ```HIPASSERT``` : Same as ```HIP_ASSERT``` but will not call Catch2's ```REQUIRE``` on the HIP API. It will print if there is a mismatch and exit the process.
 
 ## MultiProc Management Class
-There is a special interface available for process isolation. ```hip::SpawnProc``` in ```hip_test_process.hh```. Using this interface test can spawn of process and place passing conditions on its return value or its output to stdout. This can be useful for testing printf tests.
+There is a special interface available for process isolation. ```hip::SpawnProc``` in ```hip_test_process.hh```. Using this interface test can spawn a process and place passing conditions on its return value or its output to stdout. This can be useful for testing printf output.
 Sample Usage:
 ```cpp
 hip::SpawnProc proc(<relative path of exe with test folder>, <optional bool value, if output is to be recorded>);
