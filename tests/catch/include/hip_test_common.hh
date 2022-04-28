@@ -67,48 +67,6 @@ struct HCResult {
   HCResult(size_t l, std::string f, hipError_t r, std::string c, bool b = true)
       : line(l), file(f), result(r), call(c), conditionsResult(b) {}
 };
-
-struct HCResults {
-  static HCResults& get() {
-    static HCResults instance;
-    return instance;
-  }
-
- private:
-  std::vector<HCResult> results;
-  std::mutex resultMutex;
-
-  HCResults() {}
-
- public:
-  void insert(HCResult r) {
-    std::unique_lock<std::mutex> lock(resultMutex);
-    results.push_back(r);
-  }
-
-  void finalize() {
-    std::unique_lock<std::mutex> lock(resultMutex);
-    for (const auto& i : results) {
-      INFO("HIP API Result check\n    File:: "
-           << i.file << "\n    Line:: " << i.line << "\n    API:: " << i.call << "\n    Result:: "
-           << i.result << "\n    Result Str:: " << hipGetErrorString(i.result));
-      REQUIRE(((i.result == hipSuccess) || (i.result == hipErrorPeerAccessAlreadyEnabled)));
-      REQUIRE(i.conditionsResult);
-    }
-    results.clear();               // Clear the results after finalizing
-    hasErrorOccured.store(false);  // Clear the flag
-  }
-
-  ~HCResults() {
-    // Only show this message when there are unchecked results and no error has occured
-    if (results.size() != 0 && hasErrorOccured.load() == false) {
-      std::cerr << "HIP_CHECK_THREAD_FINALIZE() has not been called after HIP_CHECK_THREAD\n"
-                << "Please call HIP_CHECK_THREAD_FINALIZE after joining threads\n"
-                << "There is/are " << results.size() << " unchecked results from threads."
-                << std::endl;
-    }
-  }
-};
 }  // namespace internal
 
 // Threaded HIP_CHECKs
@@ -116,35 +74,29 @@ struct HCResults {
   {                                                                                                \
     /*To see if error has occured in previous threads, stop execution to save time waiting for     \
      * error*/                                                                                     \
-    if (hasErrorOccured.load() == true) {                                                          \
+    if (TestContext::get().hasErrorOccured() == true) {                                            \
       return; /*This will only work with std::thread and not with std::async*/                     \
     }                                                                                              \
     auto localError = error;                                                                       \
-    if ((localError != hipSuccess) && (localError != hipErrorPeerAccessAlreadyEnabled)) {          \
-      hasErrorOccured.store(true);                                                                 \
-    }                                                                                              \
     HCResult result(__LINE__, __FILE__, localError, #error);                                       \
-    HCResults::get().insert(result);                                                               \
+    TestContext::get().addResults(result);                                                         \
   }
 
 #define REQUIRE_THREAD(condition)                                                                  \
   {                                                                                                \
     /*To see if error has occured in previous threads, stop execution to save time waiting for     \
      * error*/                                                                                     \
-    if (hasErrorOccured.load() == true) {                                                          \
+    if (TestContext::get().hasErrorOccured() == true) {                                            \
       return; /*This will only work with std::thread and not with std::async*/                     \
     }                                                                                              \
     auto localResult = (condition);                                                                \
-    if (!localResult) {                                                                            \
-      hasErrorOccured.store(true);                                                                 \
-    }                                                                                              \
     HCResult result(__LINE__, __FILE__, hipSuccess, #condition, localResult);                      \
-    HCResults::get().insert(result);                                                               \
+    TestContext::get().addResults(result);                                                         \
   }
 
 // Do not call before all threads have joined
 #define HIP_CHECK_THREAD_FINALIZE()                                                                \
-  { HCResults::get().finalize(); }
+  { TestContext::get().finalizeResults(); }
 
 #define HIPRTC_CHECK(error)                                                                        \
   {                                                                                                \

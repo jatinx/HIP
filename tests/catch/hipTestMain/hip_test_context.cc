@@ -209,3 +209,27 @@ bool TestContext::parseJsonFile() {
 
   return true;
 }
+
+void TestContext::addResults(internal::HCResult r) {
+  std::unique_lock<std::mutex> lock(resultMutex);
+  results.push_back(r);
+  if ((!r.conditionsResult) ||
+      ((r.result != hipSuccess) && (r.result != hipErrorPeerAccessAlreadyEnabled))) {
+    hasErrorOccured_.store(true);
+  }
+}
+
+void TestContext::finalizeResults() {
+  std::unique_lock<std::mutex> lock(resultMutex);
+  for (const auto& i : results) {
+    INFO("HIP API Result check\n    File:: "
+         << i.file << "\n    Line:: " << i.line << "\n    API:: " << i.call
+         << "\n    Result:: " << i.result << "\n    Result Str:: " << hipGetErrorString(i.result));
+    REQUIRE(((i.result == hipSuccess) || (i.result == hipErrorPeerAccessAlreadyEnabled)));
+    REQUIRE(i.conditionsResult);
+  }
+  results.clear();                // Clear the results after finalizing
+  hasErrorOccured_.store(false);  // Clear the flag
+}
+
+bool TestContext::hasErrorOccured() { return hasErrorOccured_.load(); }

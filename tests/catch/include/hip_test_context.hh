@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include <vector>
 #include <string>
 #include <set>
+#include <mutex>
 
 #if defined(_WIN32)
 #define HT_WIN 1
@@ -69,14 +70,13 @@ class TestContext {
   std::string current_test;
   std::set<std::string> skip_test;
   std::string json_file_;
-  std::vector<std::string>  platform_list_ = {"amd" , "nvidia"};
-  std::vector<std::string>  os_list_ = {"windows", "linux", "all"};
-  std::vector<std::string>  amd_arch_list_ = {};
+  std::vector<std::string> platform_list_ = {"amd", "nvidia"};
+  std::vector<std::string> os_list_ = {"windows", "linux", "all"};
+  std::vector<std::string> amd_arch_list_ = {};
 
   Config config_;
   std::string& getJsonFile();
-  std::string substringFound( std::vector<std::string> list,
-                              std::string filename);
+  std::string substringFound(std::vector<std::string> list, std::string filename);
   void detectOS();
   void detectPlatform();
   void fillConfig();
@@ -87,6 +87,10 @@ class TestContext {
   const Config& getConfig() const { return config_; }
 
   TestContext(int argc, char** argv);
+
+  std::mutex resultMutex;
+  std::vector<HCResult> results;  // Multi threaded test results
+  std::atomic<bool> hasErrorOccured_{false};
 
  public:
   static const TestContext& get(int argc = 0, char** argv = nullptr) {
@@ -103,6 +107,21 @@ class TestContext {
   const std::string& getCurrentTest() const { return current_test; }
   std::string currentPath() const;
 
+  // Multi threaded results helpers
+  void addResults(internal::HCResult r);  // Add multi threaded results
+  void finalizeResults();                 // Validate on all results
+  bool hasErrorOccured();                 // Query if error has occured
+
   TestContext(const TestContext&) = delete;
   void operator=(const TestContext&) = delete;
+
+  ~TestContext() {
+    // Only show this message when there are unchecked results and no error has occured
+    if (results.size() != 0 && hasErrorOccured_.load() == false) {
+      std::cerr << "HIP_CHECK_THREAD_FINALIZE() has not been called after HIP_CHECK_THREAD\n"
+                << "Please call HIP_CHECK_THREAD_FINALIZE after joining threads\n"
+                << "There is/are " << results.size() << " unchecked results from threads."
+                << std::endl;
+    }
+  }
 };
