@@ -22,7 +22,9 @@ THE SOFTWARE.
 
 #pragma once
 #include <hip/hip_runtime.h>
+#include <atomic>
 #include <vector>
+#include <iostream>
 #include <string>
 #include <set>
 #include <mutex>
@@ -63,6 +65,8 @@ typedef struct Config_ {
   std::string os;                     // windows/linux
 } Config;
 
+struct HCResult;
+
 class TestContext {
   bool p_windows = false, p_linux = false;  // OS
   bool amd = false, nvidia = false;         // HIP Platform
@@ -93,7 +97,7 @@ class TestContext {
   std::atomic<bool> hasErrorOccured_{false};
 
  public:
-  static const TestContext& get(int argc = 0, char** argv = nullptr) {
+  static TestContext& get(int argc = 0, char** argv = nullptr) {
     static TestContext instance(argc, argv);
     return instance;
   }
@@ -108,7 +112,7 @@ class TestContext {
   std::string currentPath() const;
 
   // Multi threaded results helpers
-  void addResults(internal::HCResult r);  // Add multi threaded results
+  void addResults(HCResult r);            // Add multi threaded results
   void finalizeResults();                 // Validate on all results
   bool hasErrorOccured();                 // Query if error has occured
 

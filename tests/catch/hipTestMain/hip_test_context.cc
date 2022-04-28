@@ -210,7 +210,7 @@ bool TestContext::parseJsonFile() {
   return true;
 }
 
-void TestContext::addResults(internal::HCResult r) {
+void TestContext::addResults(HCResult r) {
   std::unique_lock<std::mutex> lock(resultMutex);
   results.push_back(r);
   if ((!r.conditionsResult) ||

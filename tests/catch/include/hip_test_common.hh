@@ -55,9 +55,6 @@ THE SOFTWARE.
     REQUIRE(localError == expectedError);                                                          \
   }
 
-inline namespace internal {
-static std::atomic<bool> hasErrorOccured{false};  // flag to stop execution of threads if error has
-                                                  // occurred in one of the threads
 struct HCResult {
   size_t line;            // Line of check (HIP_CHECK_THREAD or REQUIRE_THREAD)
   std::string file;       // File name of the check
@@ -67,7 +64,6 @@ struct HCResult {
   HCResult(size_t l, std::string f, hipError_t r, std::string c, bool b = true)
       : line(l), file(f), result(r), call(c), conditionsResult(b) {}
 };
-}  // namespace internal
 
 // Threaded HIP_CHECKs
 #define HIP_CHECK_THREAD(error)                                                                    \
