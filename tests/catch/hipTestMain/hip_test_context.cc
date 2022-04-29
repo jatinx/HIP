@@ -212,7 +212,6 @@ bool TestContext::parseJsonFile() {
 
 void TestContext::addResults(HCResult r) {
   std::unique_lock<std::mutex> lock(resultMutex);
-  hasFinalizeCalled_.store(false);
   results.push_back(r);
   if ((!r.conditionsResult) ||
       ((r.result != hipSuccess) && (r.result != hipErrorPeerAccessAlreadyEnabled))) {
@@ -222,7 +221,9 @@ void TestContext::addResults(HCResult r) {
 
 void TestContext::finalizeResults() {
   std::unique_lock<std::mutex> lock(resultMutex);
-  hasFinalizeCalled_.store(true);
+  // clear the results whatever happens
+  std::shared_ptr<void> emptyVec(nullptr, [this](auto) { results.clear(); });
+
   for (const auto& i : results) {
     INFO("HIP API Result check\n    File:: "
          << i.file << "\n    Line:: " << i.line << "\n    API:: " << i.call
@@ -230,15 +231,14 @@ void TestContext::finalizeResults() {
     REQUIRE(((i.result == hipSuccess) || (i.result == hipErrorPeerAccessAlreadyEnabled)));
     REQUIRE(i.conditionsResult);
   }
-  results.clear();                // Clear the results after finalizing
   hasErrorOccured_.store(false);  // Clear the flag
 }
 
 bool TestContext::hasErrorOccured() { return hasErrorOccured_.load(); }
 
 TestContext::~TestContext() {
-  // Only show this message when there are unchecked results and no error has occured
-  if (results.size() != 0 && hasFinalizeCalled_.load() == false) {
+  // Show this message when there are unchecked results
+  if (results.size() != 0) {
     std::cerr << "HIP_CHECK_THREAD_FINALIZE() has not been called after HIP_CHECK_THREAD\n"
               << "Please call HIP_CHECK_THREAD_FINALIZE after joining threads\n"
               << "There is/are " << results.size() << " unchecked results from threads."

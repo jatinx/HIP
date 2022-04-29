@@ -105,7 +105,6 @@ class TestContext {
   std::mutex resultMutex;
   std::vector<HCResult> results;  // Multi threaded test results buffer
   std::atomic<bool> hasErrorOccured_{false};
-  std::atomic<bool> hasFinalizeCalled_{false};
 
  public:
   static TestContext& get(int argc = 0, char** argv = nullptr) {
