@@ -243,5 +243,7 @@ TestContext::~TestContext() {
               << "Please call HIP_CHECK_THREAD_FINALIZE after joining threads\n"
               << "There is/are " << results.size() << " unchecked results from threads."
               << std::endl;
+    std::abort();  // Crash to bring users attention to this message and avoid accidental passing of
+                   // tests without checking for errors
   }
 }
