@@ -55,16 +55,6 @@ THE SOFTWARE.
     REQUIRE(localError == expectedError);                                                          \
   }
 
-struct HCResult {
-  size_t line;            // Line of check (HIP_CHECK_THREAD or REQUIRE_THREAD)
-  std::string file;       // File name of the check
-  hipError_t result;      // hipResult for HIP_CHECK_THREAD, for conditions its hipSuccess
-  std::string call;       // Call of HIP API or a bool condition
-  bool conditionsResult;  // If bool condition, result of call. For HIP Calls its true
-  HCResult(size_t l, std::string f, hipError_t r, std::string c, bool b = true)
-      : line(l), file(f), result(r), call(c), conditionsResult(b) {}
-};
-
 // Threaded HIP_CHECKs
 #define HIP_CHECK_THREAD(error)                                                                    \
   {                                                                                                \

@@ -65,7 +65,16 @@ typedef struct Config_ {
   std::string os;                     // windows/linux
 } Config;
 
-struct HCResult;
+// Store Multi threaded results
+struct HCResult {
+  size_t line;            // Line of check (HIP_CHECK_THREAD or REQUIRE_THREAD)
+  std::string file;       // File name of the check
+  hipError_t result;      // hipResult for HIP_CHECK_THREAD, for conditions its hipSuccess
+  std::string call;       // Call of HIP API or a bool condition
+  bool conditionsResult;  // If bool condition, result of call. For HIP Calls its true
+  HCResult(size_t l, std::string f, hipError_t r, std::string c, bool b = true)
+      : line(l), file(f), result(r), call(c), conditionsResult(b) {}
+};
 
 class TestContext {
   bool p_windows = false, p_linux = false;  // OS
@@ -92,9 +101,11 @@ class TestContext {
 
   TestContext(int argc, char** argv);
 
+  // Multi threaded checks helpers
   std::mutex resultMutex;
-  std::vector<HCResult> results;  // Multi threaded test results
+  std::vector<HCResult> results;  // Multi threaded test results buffer
   std::atomic<bool> hasErrorOccured_{false};
+  std::atomic<bool> hasFinalizeCalled_{false};
 
  public:
   static TestContext& get(int argc = 0, char** argv = nullptr) {
@@ -112,20 +123,12 @@ class TestContext {
   std::string currentPath() const;
 
   // Multi threaded results helpers
-  void addResults(HCResult r);            // Add multi threaded results
-  void finalizeResults();                 // Validate on all results
-  bool hasErrorOccured();                 // Query if error has occured
+  void addResults(HCResult r);  // Add multi threaded results
+  void finalizeResults();       // Validate on all results
+  bool hasErrorOccured();       // Query if error has occured
 
   TestContext(const TestContext&) = delete;
   void operator=(const TestContext&) = delete;
 
-  ~TestContext() {
-    // Only show this message when there are unchecked results and no error has occured
-    if (results.size() != 0 && hasErrorOccured_.load() == false) {
-      std::cerr << "HIP_CHECK_THREAD_FINALIZE() has not been called after HIP_CHECK_THREAD\n"
-                << "Please call HIP_CHECK_THREAD_FINALIZE after joining threads\n"
-                << "There is/are " << results.size() << " unchecked results from threads."
-                << std::endl;
-    }
-  }
+  ~TestContext();
 };
