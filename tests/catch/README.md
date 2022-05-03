@@ -103,14 +103,19 @@ Note: These should used in ```std::thread``` only. For multi proc guidelines loo
 
 - ```HIP_CHECK_THREAD``` : This macro takes in a HIP API and tests for its result to be either ```hipSuccess``` or ```hipErrorPeerAccessAlreadyEnabled```. It can also tell other threads if an error has occured in one of the HIP API and can prematurely stop the threads.
 
+- ```REQUIRE_THREAD``` : This macro takes in a bool condition and tests for its result to be true. If this check fails, it can signal other threads to terminate early.
+
 - ```HIP_CHECK_THREAD_FINALIZE``` : This macro checks for the results logged by ```HIP_CHECK_THREAD```. This needs to be called after the threads have joined.
+
+Please also note that you can not return values in functions calling ```HIP_CHECK_THREAD``` or ```REQUIRE_THREAD``` macro.
 
   Usage:
 
   ```cpp
   auto threadFunc = []() {
-      int dPtr;
+      int *dPtr{nullptr};
       HIP_CHECK_THREAD(hipMalloc(&dPtr, 10));
+      REQUIRE_THREAD(dPtr != nullptr);
       // Some other work
     };
 
