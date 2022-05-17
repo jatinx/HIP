@@ -94,7 +94,7 @@ TEST_CASE("Unit_hipMemcpy_Negative") {
     HIP_CHECK_ERROR(
         hipMemcpyAsync(nullptr, nullptr, NUM_ELM * sizeof(float), hipMemcpyDefault, stream),
         hipErrorInvalidValue);
-    HIP_CHECK_ERROR(hipMemcpyHtoD(hipDeviceptr_t(nullptr), nullptr, NUM_ELM * sizeof(float)) !=
+    HIP_CHECK_ERROR(hipMemcpyHtoD(hipDeviceptr_t(nullptr), nullptr, NUM_ELM * sizeof(float)),
                     hipErrorInvalidValue);
     HIP_CHECK_ERROR(
         hipMemcpyHtoDAsync(hipDeviceptr_t(nullptr), nullptr, NUM_ELM * sizeof(float), stream),
