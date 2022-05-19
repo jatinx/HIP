@@ -32,6 +32,15 @@ static constexpr auto NUM_H{4};
 static constexpr auto BIGNUM_H{100};
 static constexpr auto ARRAY_LOOP{100};
 
+#ifdef __HIP_PLATFORM_NVIDIA__
+#define HIP_TEX_REFERENCE hipTexRef
+#define HIP_ARRAY hiparray
+#else  // __HIP_PLATFORM_NVIDIA__
+#define ARRAY_DESTROY(array) HIPCHECK(hipFreeArray(array));
+#define HIP_TEX_REFERENCE textureReference*
+#define HIP_ARRAY hipArray*
+#endif  // __HIP_PLATFORM_NVIDIA__
+
 /*
  * This API verifies  memory allocations for small and
  * bigger chunks of data.
@@ -51,7 +60,7 @@ static void ArrayCreate_DiffSizes(int gpu) {
   std::vector<size_t> array_size;
   array_size.push_back(NUM_W);
   array_size.push_back(BIGNUM_W);
-  for (auto &size : array_size) {
+  for (auto& size : array_size) {
     HIP_ARRAY array[ARRAY_LOOP];
     size_t tot, avail, ptot, pavail;
     HIP_CHECK(hipMemGetInfo(&pavail, &ptot));
@@ -79,14 +88,10 @@ static void ArrayCreate_DiffSizes(int gpu) {
 }
 
 /*Thread function*/
-static void ArrayCreateThreadFunc(int gpu) {
-  ArrayCreate_DiffSizes(gpu);
-}
+static void ArrayCreateThreadFunc(int gpu) { ArrayCreate_DiffSizes(gpu); }
 
 /* This testcase verifies hipArrayCreate API for small and big chunks data*/
-TEST_CASE("Unit_hipArrayCreate_DiffSizes") {
-  ArrayCreate_DiffSizes(0);
-}
+TEST_CASE("Unit_hipArrayCreate_DiffSizes") { ArrayCreate_DiffSizes(0); }
 
 
 /* This testcase verifies the negative scenarios of
@@ -100,9 +105,7 @@ TEST_CASE("Unit_hipArrayCreate_Negative") {
   desc.Width = NUM_W;
   desc.Height = NUM_H;
 #if HT_NVIDIA
-  SECTION("NullPointer to Array") {
-    REQUIRE(hipArrayCreate(nullptr, &desc) != hipSuccess);
-  }
+  SECTION("NullPointer to Array") { REQUIRE(hipArrayCreate(nullptr, &desc) != hipSuccess); }
 
   SECTION("NullPointer to Channel Descriptor") {
     REQUIRE(hipArrayCreate(&array, nullptr) != hipSuccess);
@@ -135,7 +138,7 @@ TEST_CASE("Unit_hipArrayCreate_MultiThread") {
     threadlist.push_back(std::thread(ArrayCreateThreadFunc, i));
   }
 
-  for (auto &t : threadlist) {
+  for (auto& t : threadlist) {
     t.join();
   }
   HIP_CHECK(hipMemGetInfo(&avail, &tot));
